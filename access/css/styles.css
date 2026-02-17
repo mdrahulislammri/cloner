@@ -1,0 +1,74 @@
+:root {
+  --brand-green: #10b981;
+  --brand-green-dark: #047857;
+  --bg-soft: #f8fffb;
+}
+
+* { scroll-behavior: smooth; }
+body {
+  font-family: 'Hind Siliguri', 'Inter', system-ui, sans-serif;
+  background: radial-gradient(circle at top right, #ecfdf5 0, #f8fffb 35%, #ffffff 100%);
+}
+
+.hero-tech {
+  background:
+    radial-gradient(1000px 400px at 20% -10%, rgba(16,185,129,.22), transparent 55%),
+    radial-gradient(800px 300px at 90% 0%, rgba(52,211,153,.2), transparent 45%),
+    linear-gradient(180deg, #ffffff, #f7fffb);
+}
+
+.glass-card {
+  background: rgba(255,255,255,.93);
+  border: 1px solid #dff5e9;
+  border-radius: 1rem;
+  box-shadow: 0 10px 40px rgba(16, 185, 129, 0.08);
+}
+
+.section-title {
+  color: #065f46;
+  font-weight: 800;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--brand-green), #059669);
+  color: #fff;
+  border-radius: .8rem;
+  padding: .78rem 1.2rem;
+  display: inline-block;
+  font-weight: 700;
+}
+.btn-primary:hover { filter: brightness(.95); }
+
+.btn-outline {
+  border: 1px solid #86efac;
+  color: var(--brand-green-dark);
+  background: #fff;
+  border-radius: .8rem;
+  padding: .78rem 1.2rem;
+  display: inline-block;
+  font-weight: 700;
+}
+
+.filter-btn {
+  border: 1px solid #a7f3d0;
+  background: #fff;
+  color: #065f46;
+  padding: .45rem .95rem;
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: .85rem;
+}
+
+.filter-btn.active {
+  background: #059669;
+  color: #fff;
+  border-color: #059669;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #a7f3d0;
+}
+.dot.active { background: #059669; width: 20px; }

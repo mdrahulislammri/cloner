@@ -1,0 +1,51 @@
+CREATE DATABASE IF NOT EXISTS greentech_boost CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE greentech_boost;
+
+CREATE TABLE IF NOT EXISTS admins (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  email VARCHAR(120) NOT NULL UNIQUE,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS settings (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  setting_key VARCHAR(120) NOT NULL UNIQUE,
+  setting_value TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS services (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(180) NOT NULL,
+  description TEXT NOT NULL,
+  icon VARCHAR(20) DEFAULT '🟢',
+  sort_order INT DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS portfolio_items (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  title VARCHAR(180) NOT NULL,
+  category VARCHAR(100) DEFAULT 'Social',
+  image_path VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS testimonials (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  client_name VARCHAR(120) NOT NULL,
+  designation VARCHAR(120) DEFAULT 'Client',
+  content TEXT NOT NULL,
+  rating TINYINT DEFAULT 5
+);
+
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(120) NOT NULL,
+  email VARCHAR(120) NOT NULL,
+  message TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO admins(name,email,password_hash)
+VALUES ('Super Admin','admin@example.com','$2y$12$aHnTceuv/Gf5OwtvwRJMq.ytxu1cdpjBod/.XqBlrlvfK4CL7Ka2q')
+ON DUPLICATE KEY UPDATE email = VALUES(email);
