@@ -173,7 +173,7 @@ $testimonials = getTestimonials();
     <section id="contact" class="py-14 lg:py-20">
       <h2 class="section-title text-center text-3xl lg:text-4xl">যোগাযোগ করুন</h2>
       <div class="mt-8 grid lg:grid-cols-2 gap-6">
-        <form action="submit-contact.php" method="post" class="glass-card p-6 space-y-3">
+        <form action="submit.php" method="post" class="glass-card p-6 space-y-3">
           <input class="w-full border border-emerald-100 rounded-xl p-3" name="name" placeholder="আপনার নাম" required>
           <input class="w-full border border-emerald-100 rounded-xl p-3" name="email" type="email" placeholder="ইমেইল" required>
           <textarea class="w-full border border-emerald-100 rounded-xl p-3" name="message" rows="5" placeholder="আপনার মেসেজ" required></textarea>
