@@ -44,6 +44,35 @@ if (($settings['chat_whatsapp_enabled'] ?? '1') === '1') {
     $channels[] = ['label' => 'WhatsApp', 'icon' => '🟢', 'url' => 'https://wa.me/' . $whatsappNumber];
 }
 
+
+$scheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+$host = (string)($_SERVER['HTTP_HOST'] ?? 'localhost');
+$baseUrl = $scheme . '://' . $host;
+$canonicalUrl = $baseUrl . '/index.php';
+$ogImage = $baseUrl . '/' . ltrim((string)($settings['hero_image'] ?? 'access/img/hero-illustration.svg'), '/');
+$orgJsonLd = [
+    '@context' => 'https://schema.org',
+    '@type' => 'Organization',
+    'name' => (string)$settings['site_title'],
+    'url' => $baseUrl,
+    'logo' => $ogImage,
+    'contactPoint' => [[
+        '@type' => 'ContactPoint',
+        'telephone' => (string)($settings['phone'] ?? ''),
+        'contactType' => 'customer support',
+        'email' => (string)($settings['email'] ?? ''),
+        'areaServed' => 'BD',
+        'availableLanguage' => ['bn', 'en'],
+    ]],
+];
+$websiteJsonLd = [
+    '@context' => 'https://schema.org',
+    '@type' => 'WebSite',
+    'name' => (string)$settings['site_title'],
+    'url' => $baseUrl,
+    'inLanguage' => 'bn-BD',
+];
+
 $callNumber = trim((string)($settings['call_number'] ?? ($settings['phone'] ?? '')));
 if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
     $channels[] = ['label' => 'Call', 'icon' => '📞', 'url' => 'tel:' . preg_replace('/[^\d+]/', '', $callNumber)];
@@ -56,8 +85,26 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title><?= htmlspecialchars($settings['site_title']) ?></title>
   <meta name="description" content="<?= htmlspecialchars($settings['hero_subtitle']) ?>">
+  <meta name="robots" content="index,follow,max-image-preview:large">
+  <meta name="author" content="<?= htmlspecialchars($settings['site_title']) ?>">
+  <meta name="theme-color" content="#10b981">
+  <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl) ?>">
+
+  <meta property="og:type" content="website">
+  <meta property="og:locale" content="bn_BD">
   <meta property="og:title" content="<?= htmlspecialchars($settings['site_title']) ?>">
   <meta property="og:description" content="<?= htmlspecialchars($settings['hero_subtitle']) ?>">
+  <meta property="og:url" content="<?= htmlspecialchars($canonicalUrl) ?>">
+  <meta property="og:image" content="<?= htmlspecialchars($ogImage) ?>">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="<?= htmlspecialchars($settings['site_title']) ?>">
+  <meta name="twitter:description" content="<?= htmlspecialchars($settings['hero_subtitle']) ?>">
+  <meta name="twitter:image" content="<?= htmlspecialchars($ogImage) ?>">
+
+  <script type="application/ld+json"><?= json_encode($orgJsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+  <script type="application/ld+json"><?= json_encode($websiteJsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
+
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="access/css/styles.css">
 </head>
@@ -106,7 +153,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
       <div class="relative">
         <div class="absolute -top-10 -right-4 w-40 h-40 rounded-full bg-emerald-200/60 blur-3xl"></div>
         <div class="hero-visual glass-card p-4">
-          <img src="<?= htmlspecialchars($settings['hero_image']) ?>" alt="Hero" class="w-full h-[420px] object-cover rounded-[2rem] border border-emerald-100">
+          <img src="<?= htmlspecialchars($settings['hero_image']) ?>" alt="<?= htmlspecialchars($settings['site_title']) ?> hero showcase" class="w-full h-[420px] object-cover rounded-[2rem] border border-emerald-100" fetchpriority="high" decoding="async">
         </div>
       </div>
     </div>
@@ -150,7 +197,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <div class="mt-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <?php foreach ($portfolio as $item): ?>
             <article class="portfolio-item overflow-hidden">
-              <img src="<?= htmlspecialchars($item['image_path']) ?>" alt="<?= htmlspecialchars($item['title']) ?>" class="w-full h-48 object-cover">
+              <img src="<?= htmlspecialchars($item['image_path']) ?>" alt="<?= htmlspecialchars($item['title']) ?>" class="w-full h-48 object-cover" loading="lazy" decoding="async">
               <div class="p-4"><p class="text-xs text-emerald-700 font-semibold"><?= htmlspecialchars($item['category']) ?></p><h3 class="font-semibold mt-1"><?= htmlspecialchars($item['title']) ?></h3></div>
             </article>
           <?php endforeach; ?>
