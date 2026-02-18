@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const toast = document.querySelector('[data-toast]');
   const toastClose = document.querySelector('[data-toast-close]');
+  const toastStack = document.querySelector('[data-toast-stack]');
 
   if (toast) {
     const removeToast = () => {
@@ -57,7 +58,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 220);
     };
 
-    const timer = window.setTimeout(removeToast, 4000);
+    const toastDuration = Number.parseInt(toastStack?.dataset.toastDuration || '4000', 10);
+    const safeDuration = Number.isFinite(toastDuration) ? Math.min(Math.max(toastDuration, 1000), 15000) : 4000;
+    const timer = window.setTimeout(removeToast, safeDuration);
     if (toastClose) {
       toastClose.addEventListener('click', () => {
         window.clearTimeout(timer);

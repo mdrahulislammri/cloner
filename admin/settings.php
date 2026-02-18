@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'contact_title','contact_subtitle','phone','email','address',
         'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text',
         'chat_widget_title','chat_widget_subtitle','messenger_url','telegram_url','call_number',
-        'footer_text'
+        'toast_position','toast_duration_ms','footer_text'
     ];
 
     $toggleFields = [
@@ -24,6 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'chat_telegram_enabled',
         'chat_whatsapp_enabled',
         'chat_call_enabled',
+        'toast_enabled',
     ];
 
     $stmt = db()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (:k,:v) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
@@ -101,6 +102,7 @@ $settings = getSiteSettings();
       'messenger_url' => 'Messenger URL',
       'telegram_url' => 'Telegram URL',
       'call_number' => 'Call Number',
+      'toast_duration_ms' => 'Toast Auto Close (ms)',
       'footer_text' => 'Footer Text',
     ];
     foreach ($fields as $key => $label):
@@ -124,6 +126,7 @@ $settings = getSiteSettings();
           'chat_telegram_enabled' => 'Telegram',
           'chat_whatsapp_enabled' => 'WhatsApp',
           'chat_call_enabled' => 'Call',
+          'toast_enabled' => 'Popup Toast Notification',
         ];
         foreach ($toggles as $key => $label):
         ?>
@@ -132,6 +135,22 @@ $settings = getSiteSettings();
             <span><?= htmlspecialchars($label) ?></span>
           </label>
         <?php endforeach; ?>
+      </div>
+    </div>
+
+
+    <div class="md:col-span-2 border rounded p-3 bg-slate-50">
+      <p class="font-semibold mb-2">Toast Settings</p>
+      <div class="grid sm:grid-cols-2 gap-3 text-sm">
+        <label class="text-sm">Toast Position
+          <select name="toast_position" class="w-full border p-2 rounded bg-white">
+            <?php $toastPosition = (string)($settings['toast_position'] ?? 'top-right'); ?>
+            <?php $toastOptions = ['top-right','top-left','bottom-right','bottom-left']; ?>
+            <?php foreach ($toastOptions as $opt): ?>
+              <option value="<?= htmlspecialchars($opt) ?>" <?= $toastPosition === $opt ? 'selected' : '' ?>><?= htmlspecialchars($opt) ?></option>
+            <?php endforeach; ?>
+          </select>
+        </label>
       </div>
     </div>
 

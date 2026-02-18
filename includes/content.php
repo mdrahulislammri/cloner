@@ -37,6 +37,9 @@ function getSiteSettings(): array
         'messenger_url' => 'https://m.me/',
         'telegram_url' => 'https://t.me/',
         'call_number' => '+8801000000000',
+        'toast_enabled' => '1',
+        'toast_position' => 'top-right',
+        'toast_duration_ms' => '4000',
         'footer_text' => 'Premium, user-friendly, SEO-ready social media growth platform.',
     ];
 

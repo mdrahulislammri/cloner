@@ -20,6 +20,18 @@ $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'
 $chatEnabled = (($settings['chat_toggle_enabled'] ?? '1') === '1');
 $channels = [];
 
+
+$toastEnabled = (($settings['toast_enabled'] ?? '1') === '1');
+$toastPosition = (string)($settings['toast_position'] ?? 'top-right');
+$toastDuration = (int)($settings['toast_duration_ms'] ?? 4000);
+$allowedToastPositions = ['top-right', 'top-left', 'bottom-right', 'bottom-left'];
+if (!in_array($toastPosition, $allowedToastPositions, true)) {
+    $toastPosition = 'top-right';
+}
+if ($toastDuration < 1000 || $toastDuration > 15000) {
+    $toastDuration = 4000;
+}
+
 if (($settings['chat_messenger_enabled'] ?? '1') === '1' && trim((string)($settings['messenger_url'] ?? '')) !== '') {
     $channels[] = ['label' => 'Messenger', 'icon' => '💬', 'url' => (string)$settings['messenger_url']];
 }
@@ -168,8 +180,8 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <h2 class="section-title text-center text-3xl lg:text-4xl"><?= htmlspecialchars($settings['contact_title']) ?></h2>
         <p class="text-center text-slate-600 mt-2"><?= htmlspecialchars($settings['contact_subtitle']) ?></p>
 
-        <?php if (is_array($flash) && isset($flash['type'], $flash['message'])): ?>
-          <div class="toast-stack" data-toast-stack>
+        <?php if ($toastEnabled && is_array($flash) && isset($flash['type'], $flash['message'])): ?>
+          <div class="toast-stack toast-<?= htmlspecialchars($toastPosition) ?>" data-toast-stack data-toast-duration="<?= (int)$toastDuration ?>">
             <div class="toast-item <?= $flash['type'] === 'success' ? 'toast-success' : 'toast-error' ?>" data-toast role="status" aria-live="polite">
               <span class="toast-dot" aria-hidden="true"></span>
               <span><?= htmlspecialchars((string)$flash['message']) ?></span>
