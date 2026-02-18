@@ -2,14 +2,14 @@
 
 declare(strict_types=1);
 
-require_once __DIR__ . '/includes/config.php';
-require_once __DIR__ . '/includes/auth.php';
-require_once __DIR__ . '/includes/install.php';
+require_once __DIR__ . '/../includes/config.php';
+require_once __DIR__ . '/../includes/auth.php';
+require_once __DIR__ . '/../includes/install.php';
 
 startSecureSession();
 
 if (isInstalled()) {
-    header('Location: admin/login.php');
+    header('Location: ../admin/login.php');
     exit;
 }
 
@@ -37,7 +37,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 && upsertSetting('app_installed', '1');
 
             if ($saveOk) {
-                header('Location: admin/login.php?installed=1');
+                header('Location: ../admin/login.php?installed=1');
                 exit;
             }
 
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body class="min-h-screen bg-slate-100 grid place-items-center p-4">
   <form method="post" class="w-full max-w-xl bg-white shadow rounded-2xl p-6 space-y-4">
     <h1 class="text-2xl font-bold text-green-700">Install Script</h1>
-    <p class="text-sm text-slate-600">cPanel upload করার পরে একবার installer run করুন। আপনার current IP auto detect করা হয়েছে এবং whitelist এ add হবে।</p>
+    <p class="text-sm text-slate-600">cPanel upload করার পরে একবার installer run করুন। install complete না হওয়া পর্যন্ত website locked থাকবে।</p>
 
     <?php if ($error !== ''): ?>
       <p class="text-sm bg-red-50 text-red-700 p-2 rounded"><?= htmlspecialchars($error) ?></p>

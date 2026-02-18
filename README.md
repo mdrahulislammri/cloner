@@ -34,7 +34,7 @@ php -S 127.0.0.1:8000
    ```bash
    php -S 127.0.0.1:8000
    ```
-4. Browser এ open করুন `http://127.0.0.1:8000/install.php` এবং installer complete করুন।
+4. Browser এ open করুন `http://127.0.0.1:8000/install/index.php` এবং installer complete করুন।
    - Installer auto-detect করে আপনার current IP whitelist এ add করবে।
    - চাইলে setup এর সময় extra IP/CIDR add করতে পারবেন।
 5. তারপর Admin login করুন: `admin@example.com` / `Admin@123`.

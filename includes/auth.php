@@ -130,7 +130,7 @@ function isIpWhitelistedForAdmin(string $ip): bool
 function enforceAdminIpWhitelist(): void
 {
     if (!isInstalled()) {
-        header('Location: ' . rtrim((string)appEnv('BASE_URL', BASE_URL), '/') . '/install.php');
+        header('Location: ' . rtrim((string)appEnv('BASE_URL', BASE_URL), '/') . '/install/index.php');
         exit;
     }
 
