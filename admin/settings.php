@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'contact_title','contact_subtitle','phone','email','address',
         'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text',
         'chat_widget_title','chat_widget_subtitle','messenger_url','telegram_url','call_number',
-        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist'
+        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist','nav_logo','favicon'
     ];
 
     $toggleFields = [
@@ -43,25 +43,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
 
     $stmt->execute([':k' => 'app_installed', ':v' => '1']);
 
-    if (!empty($_FILES['hero_image']['name']) && is_uploaded_file($_FILES['hero_image']['tmp_name'])) {
-        $mime = mime_content_type($_FILES['hero_image']['tmp_name']) ?: '';
-        $allowedMime = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/svg+xml' => 'svg'];
+    $allowedMime = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/svg+xml' => 'svg', 'image/x-icon' => 'ico'];
+    $targetDir = __DIR__ . '/../access/img/uploads';
+    if (!is_dir($targetDir)) {
+        mkdir($targetDir, 0775, true);
+    }
 
-        if (isset($allowedMime[$mime])) {
-            $ext = $allowedMime[$mime];
-            $targetDir = __DIR__ . '/../access/img/uploads';
-            if (!is_dir($targetDir)) {
-                mkdir($targetDir, 0775, true);
-            }
-            $fileName = 'hero-' . time() . '.' . $ext;
-            $targetPath = $targetDir . '/' . $fileName;
-            if (move_uploaded_file($_FILES['hero_image']['tmp_name'], $targetPath)) {
-                $webPath = 'access/img/uploads/' . $fileName;
-                $stmt->execute([':k' => 'hero_image', ':v' => $webPath]);
-            }
-        } else {
-            $uploadError = 'Invalid hero image format.';
+    $uploadMap = [
+        'hero_image' => ['setting' => 'hero_image', 'prefix' => 'hero'],
+        'nav_logo_file' => ['setting' => 'nav_logo', 'prefix' => 'logo'],
+        'favicon_file' => ['setting' => 'favicon', 'prefix' => 'favicon'],
+    ];
+
+    foreach ($uploadMap as $inputName => $meta) {
+        if (empty($_FILES[$inputName]['name']) || !is_uploaded_file($_FILES[$inputName]['tmp_name'])) {
+            continue;
         }
+
+        $mime = mime_content_type($_FILES[$inputName]['tmp_name']) ?: '';
+        if (!isset($allowedMime[$mime])) {
+            $uploadError = 'Invalid file format for ' . $meta['setting'] . '.';
+            break;
+        }
+
+        $ext = $allowedMime[$mime];
+        $fileName = $meta['prefix'] . '-' . time() . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
+        $targetPath = $targetDir . '/' . $fileName;
+
+        if (!move_uploaded_file($_FILES[$inputName]['tmp_name'], $targetPath)) {
+            $uploadError = 'Failed to upload ' . $meta['setting'] . '.';
+            break;
+        }
+
+        $webPath = 'access/img/uploads/' . $fileName;
+        $stmt->execute([':k' => $meta['setting'], ':v' => $webPath]);
     }
 
     if ($uploadError === '') {
@@ -110,6 +125,8 @@ $settings = getSiteSettings();
       'toast_duration_ms' => 'Toast Auto Close (ms)',
       'footer_text' => 'Footer Text',
       'admin_ip_whitelist' => 'Admin IP Whitelist (comma/newline separated)',
+      'nav_logo' => 'Navbar Logo Path (optional)',
+      'favicon' => 'Favicon Path (optional)',
     ];
     foreach ($fields as $key => $label):
     ?>
@@ -162,6 +179,14 @@ $settings = getSiteSettings();
 
     <label class="text-sm">Hero Image Upload
       <input type="file" name="hero_image" accept="image/*" class="w-full border p-2 rounded bg-white">
+    </label>
+
+    <label class="text-sm">Navbar Logo Upload
+      <input type="file" name="nav_logo_file" accept="image/*" class="w-full border p-2 rounded bg-white">
+    </label>
+
+    <label class="text-sm">Favicon Upload
+      <input type="file" name="favicon_file" accept="image/*,.ico" class="w-full border p-2 rounded bg-white">
     </label>
 
     <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">

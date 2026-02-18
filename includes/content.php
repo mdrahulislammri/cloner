@@ -14,6 +14,8 @@ function getSiteSettings(): array
         'hero_cta_primary' => 'এখনই অর্ডার',
         'hero_cta_secondary' => 'সার্ভিস দেখুন',
         'hero_image' => 'access/img/hero-illustration.svg',
+        'nav_logo' => 'access/img/site-logo.svg',
+        'favicon' => 'access/img/favicon.svg',
         'about_title' => 'আমরা কেন আপনার জন্য বেস্ট টিম',
         'about_description' => 'আমরা শুধুমাত্র follower count না, আপনার brand trust, engagement এবং sales boost করার জন্য end-to-end কাজ করি। প্রতিটি campaign real niche audience target করে execute করা হয়।',
         'portfolio_title' => 'পোর্টফোলিও',

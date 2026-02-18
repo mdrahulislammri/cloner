@@ -12,6 +12,9 @@ $services = getServices();
 $portfolio = getPortfolio();
 $testimonials = getTestimonials();
 
+$navLogo = trim((string)($settings['nav_logo'] ?? '')) ?: 'access/img/site-logo.svg';
+$favicon = trim((string)($settings['favicon'] ?? '')) ?: 'access/img/favicon.svg';
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
@@ -58,7 +61,7 @@ $orgJsonLd = [
     '@type' => 'Organization',
     'name' => (string)$settings['site_title'],
     'url' => $baseUrl,
-    'logo' => $ogImage,
+    'logo' => $baseUrl . '/' . ltrim($navLogo, '/'),
     'contactPoint' => [[
         '@type' => 'ContactPoint',
         'telephone' => (string)($settings['phone'] ?? ''),
@@ -91,6 +94,8 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
   <meta name="robots" content="index,follow,max-image-preview:large">
   <meta name="author" content="<?= htmlspecialchars($settings['site_title']) ?>">
   <meta name="theme-color" content="#10b981">
+  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars($favicon) ?>">
+  <link rel="shortcut icon" href="<?= htmlspecialchars($favicon) ?>">
   <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl) ?>">
 
   <meta property="og:type" content="website">
@@ -115,7 +120,11 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
   <header class="sticky top-0 z-50 backdrop-blur bg-white/90 border-b border-emerald-100">
     <nav class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
       <a href="#home" class="flex items-center gap-2">
-        <span class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white grid place-items-center font-black">G</span>
+        <?php if ($navLogo !== ''): ?>
+          <img src="<?= htmlspecialchars($navLogo) ?>" alt="<?= htmlspecialchars($settings['site_title']) ?> logo" class="w-10 h-10 rounded-2xl object-cover border border-emerald-100 bg-white" loading="eager" decoding="async">
+        <?php else: ?>
+          <span class="w-10 h-10 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-700 text-white grid place-items-center font-black">G</span>
+        <?php endif; ?>
         <span class="font-extrabold text-emerald-800"><?= htmlspecialchars($settings['site_title']) ?></span>
       </a>
 
