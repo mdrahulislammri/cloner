@@ -228,12 +228,36 @@ $testimonials = getTestimonials();
 
           <div class="glass-card p-6">
             <h3 class="text-2xl font-bold text-emerald-800">সরাসরি যোগাযোগ করুন</h3>
-            <p class="mt-4 text-slate-600">📞 <?= htmlspecialchars($settings['phone']) ?></p>
-            <p class="mt-1 text-slate-600">✉️ <?= htmlspecialchars($settings['email']) ?></p>
-            <p class="mt-1 text-slate-600">📍 <?= htmlspecialchars($settings['address']) ?></p>
 
-            <div class="mt-6 p-4 rounded-xl bg-emerald-50 border border-emerald-100 text-emerald-800">
-              দ্রুত response পেতে WhatsApp / Telegram এও যোগাযোগ করতে পারেন।
+            <div class="mt-5 space-y-4">
+              <div class="contact-item">
+                <div class="contact-icon">📞</div>
+                <div>
+                  <p class="contact-label">ফোন</p>
+                  <p class="contact-value"><?= htmlspecialchars($settings['phone']) ?></p>
+                </div>
+              </div>
+
+              <div class="contact-item">
+                <div class="contact-icon">✉️</div>
+                <div>
+                  <p class="contact-label">ইমেইল</p>
+                  <p class="contact-value"><?= htmlspecialchars($settings['email']) ?></p>
+                </div>
+              </div>
+
+              <div class="contact-item">
+                <div class="contact-icon">📍</div>
+                <div>
+                  <p class="contact-label">ঠিকানা</p>
+                  <p class="contact-value"><?= htmlspecialchars($settings['address']) ?></p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-6 p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-emerald-900">
+              <p class="font-extrabold text-lg">দ্রুত সাড়া পেতে হোয়াটসঅ্যাপে মেসেজ করুন</p>
+              <p class="mt-1 text-slate-600">আমরা সাধারণত ৪ ঘণ্টার মধ্যে রিপ্লাই দিই</p>
             </div>
 
             <h4 class="mt-7 text-lg font-bold text-emerald-800">সোশাল মিডিয়াতে ফলো করুন</h4>
@@ -270,6 +294,11 @@ $testimonials = getTestimonials();
       </div>
     </div>
   </footer>
+
+  <a href="https://wa.me/8801000000000" class="wa-float" target="_blank" rel="noopener" aria-label="WhatsApp Chat">
+    <span class="wa-pulse"></span>
+    <span class="wa-icon">💬</span>
+  </a>
 
   <script src="access/javascript/main.js"></script>
 </body>
