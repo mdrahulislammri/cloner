@@ -39,6 +39,16 @@ php -S 127.0.0.1:8000
    - চাইলে setup এর সময় extra IP/CIDR add করতে পারবেন।
 5. তারপর Admin login করুন: `admin@example.com` / `Admin@123`.
 
+
+## Installer Features
+- Full installation wizard at `install/index.php`
+- Server requirement checks (PHP/PDO/PDO-MySQL/.env writable/upload dir writable)
+- DB configuration form + automatic `.env` generation
+- Automatic schema import (`database/schema.sql`)
+- Admin account setup from installer form
+- Auto-detected admin IP whitelist + manual IP/CIDR add
+- Global install lock: until installation completes, all pages redirect to installer
+
 ## Troubleshooting (Preview না দেখালে)
 - **Port busy**: `php -S 127.0.0.1:8080` দিয়ে run করে `http://127.0.0.1:8080/index.php` open করুন।
 - **Wrong path**: command অবশ্যই project root (`/workspace/cloner`) থেকে run করবেন।
