@@ -50,6 +50,16 @@ php -S 127.0.0.1:8000
 - Auto-detected admin IP whitelist + manual IP/CIDR add
 - Global install lock: until installation completes, all pages redirect to installer
 
+
+## cPanel SEO/Server File Update (Important)
+এই 4টা file deploy করার পর নিজের domain অনুযায়ী edit করবেন:
+- `.htaccess` (security headers + sensitive file protection + custom error pages)
+- `robots.txt` (admin/install disallow + sitemap URL)
+- `sitemap.xml` (full domain links)
+
+**Must change before go-live:**
+- `https://example.com` → আপনার আসল domain
+
 ## Troubleshooting (Preview না দেখালে)
 - **Port busy**: `php -S 127.0.0.1:8080` দিয়ে run করে `http://127.0.0.1:8080/index.php` open করুন।
 - **Wrong path**: command অবশ্যই project root (`/workspace/cloner`) থেকে run করবেন।

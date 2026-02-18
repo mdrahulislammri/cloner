@@ -1,4 +1,8 @@
 User-agent: *
 Allow: /
 
-Sitemap: /sitemap.xml
+# Keep setup/admin areas out of search index
+Disallow: /admin/
+Disallow: /install/
+
+Sitemap: https://example.com/sitemap.xml

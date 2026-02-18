@@ -1,3 +1,7 @@
+# --------------------------------------------
+# GreenTech Boost - Apache / cPanel defaults
+# --------------------------------------------
+
 # Custom error pages
 ErrorDocument 403 /403.php
 ErrorDocument 404 /404.php
@@ -5,3 +9,18 @@ ErrorDocument 500 /500.php
 
 # Prevent directory listing
 Options -Indexes
+
+# Protect sensitive files
+<FilesMatch "^(\.env|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock)$">
+  Require all denied
+</FilesMatch>
+
+# Basic security headers
+<IfModule mod_headers.c>
+  Header always set X-Content-Type-Options "nosniff"
+  Header always set X-Frame-Options "SAMEORIGIN"
+  Header always set Referrer-Policy "strict-origin-when-cross-origin"
+</IfModule>
+
+# Pretty fallback for root homepage
+DirectoryIndex index.php
