@@ -8,6 +8,10 @@ $settings = getSiteSettings();
 $services = getServices();
 $portfolio = getPortfolio();
 $testimonials = getTestimonials();
+
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 ?>
 <!doctype html>
 <html lang="bn">
@@ -52,7 +56,9 @@ $testimonials = getTestimonials();
         <span class="font-extrabold text-emerald-800"><?= htmlspecialchars($settings['site_title']) ?></span>
       </a>
 
-      <button data-menu-toggle class="md:hidden text-emerald-700 text-2xl" aria-label="menu">☰</button>
+      <button data-menu-toggle class="md:hidden mobile-menu-btn" aria-label="menu" aria-expanded="false" aria-controls="mobile-menu">
+        <span data-menu-icon>☰</span>
+      </button>
 
       <ul class="hidden md:flex items-center gap-6 font-semibold text-sm">
         <li><a class="hover:text-emerald-700" href="#about">আমার সম্পর্কে</a></li>
@@ -64,7 +70,7 @@ $testimonials = getTestimonials();
       </ul>
     </nav>
 
-    <div data-mobile-menu class="hidden md:hidden border-t border-emerald-100 bg-white px-4 py-3 space-y-2 text-sm">
+    <div id="mobile-menu" data-mobile-menu class="mobile-menu hidden md:hidden border-t border-emerald-100 bg-white px-4 py-3 space-y-2 text-sm">
       <a class="block" href="#about">আমার সম্পর্কে</a>
       <a class="block" href="#services">সার্ভিস</a>
       <a class="block" href="#portfolio">পোর্টফোলিও</a>

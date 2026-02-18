@@ -1,8 +1,43 @@
 document.addEventListener('DOMContentLoaded', () => {
   const toggle = document.querySelector('[data-menu-toggle]');
   const mobileMenu = document.querySelector('[data-mobile-menu]');
+  const menuIcon = document.querySelector('[data-menu-icon]');
+
+  const closeMobileMenu = () => {
+    if (!mobileMenu || !toggle) return;
+    mobileMenu.classList.add('hidden');
+    mobileMenu.classList.remove('open');
+    toggle.setAttribute('aria-expanded', 'false');
+    if (menuIcon) menuIcon.textContent = '☰';
+  };
+
+  const openMobileMenu = () => {
+    if (!mobileMenu || !toggle) return;
+    mobileMenu.classList.remove('hidden');
+    mobileMenu.classList.add('open');
+    toggle.setAttribute('aria-expanded', 'true');
+    if (menuIcon) menuIcon.textContent = '✕';
+  };
+
   if (toggle && mobileMenu) {
-    toggle.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+    toggle.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.contains('open');
+      if (isOpen) {
+        closeMobileMenu();
+      } else {
+        openMobileMenu();
+      }
+    });
+
+    mobileMenu.querySelectorAll('a').forEach((link) => {
+      link.addEventListener('click', () => closeMobileMenu());
+    });
+
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768) {
+        closeMobileMenu();
+      }
+    });
   }
 
   const filterButtons = document.querySelectorAll('[data-filter]');
@@ -28,12 +63,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (slides.length && dotsWrap) {
     let current = 0;
 
-    const showSlide = (idx) => {
-      slides.forEach((slide, i) => slide.classList.toggle('hidden', i !== idx));
-      dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
-      current = idx;
-    };
-
     const dots = slides.map((_, idx) => {
       const dot = document.createElement('button');
       dot.className = `dot ${idx === 0 ? 'active' : ''}`;
@@ -42,6 +71,12 @@ document.addEventListener('DOMContentLoaded', () => {
       dotsWrap.appendChild(dot);
       return dot;
     });
+
+    const showSlide = (idx) => {
+      slides.forEach((slide, i) => slide.classList.toggle('hidden', i !== idx));
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
+      current = idx;
+    };
 
     if (prevBtn) {
       prevBtn.addEventListener('click', () => showSlide((current - 1 + slides.length) % slides.length));

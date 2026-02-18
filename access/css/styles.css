@@ -13,6 +13,23 @@ body {
   background: radial-gradient(circle at top right, #dcfce7 0, #f8fffb 30%, #f8fafc 100%);
 }
 
+.mobile-menu-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: .75rem;
+  border: 1px solid #a7f3d0;
+  color: #047857;
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  line-height: 1;
+  background: #fff;
+}
+
+.mobile-menu.open {
+  display: block !important;
+}
+
 .hero-tech {
   background:
     radial-gradient(900px 430px at 10% -15%, rgba(16, 185, 129, .22), transparent 60%),
@@ -258,5 +275,36 @@ body {
 
   .slider-nav {
     display: none;
+  }
+
+  h1 {
+    line-height: 1.2;
+  }
+
+  .wa-float {
+    width: 3.5rem;
+    height: 3.5rem;
+    right: .9rem;
+    bottom: .9rem;
+  }
+
+  .wa-icon {
+    width: 2.8rem;
+    height: 2.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .stat-card {
+    padding: 1rem;
+  }
+
+  .stat-number {
+    font-size: 1.3rem;
+  }
+
+  .contact-value {
+    font-size: 1rem;
+    word-break: break-word;
   }
 }
