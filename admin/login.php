@@ -5,6 +5,9 @@ declare(strict_types=1);
 require_once __DIR__ . '/../includes/auth.php';
 
 startSecureSession();
+enforceAdminIpWhitelist();
+$currentIp = getClientIpAddress();
+$whitelist = getAdminIpWhitelist();
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf'] ?? null)) {
@@ -25,6 +28,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <form method="post" class="bg-white p-7 rounded-xl shadow w-full max-w-sm space-y-3">
 <h1 class="text-2xl font-bold text-green-700">Admin Login</h1>
 <?php if ($error): ?><p class="text-red-600 text-sm"><?= htmlspecialchars($error) ?></p><?php endif; ?>
+<p class="text-xs text-slate-500">Your IP: <strong><?= htmlspecialchars($currentIp) ?></strong></p>
+<p class="text-xs text-slate-500">Allowed IPs: <?= htmlspecialchars(implode(', ', $whitelist)) ?></p>
 <input name="email" type="email" placeholder="Email" class="w-full border p-2 rounded" required>
 <input name="password" type="password" placeholder="Password" class="w-full border p-2 rounded" required>
 <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">

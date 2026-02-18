@@ -49,3 +49,16 @@ php -S 127.0.0.1:8000
 - Included: `403.php`, `404.php`, `500.php`
 - Apache mapping is configured in `.htaccess` with `ErrorDocument` directives.
 - This works out of the box on most cPanel Apache hosting.
+
+
+## Admin IP Whitelist (Security)
+Admin panel access is restricted by IP whitelist.
+
+Set environment variable on cPanel (or Apache/PHP env):
+
+```bash
+ADMIN_IP_WHITELIST=127.0.0.1,::1,103.25.44.10,103.25.44.0/24
+```
+
+- Supports single IP and CIDR format.
+- If current IP is not whitelisted, admin pages return **403**.
