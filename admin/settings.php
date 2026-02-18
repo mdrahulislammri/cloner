@@ -13,12 +13,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'site_title','hero_title','hero_subtitle','hero_badge','hero_cta_primary','hero_cta_secondary',
         'about_title','about_description','portfolio_title','portfolio_subtitle','reviews_title',
         'contact_title','contact_subtitle','phone','email','address',
-        'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text','footer_text'
+        'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text',
+        'chat_widget_title','chat_widget_subtitle','messenger_url','telegram_url','call_number',
+        'footer_text'
+    ];
+
+    $toggleFields = [
+        'chat_toggle_enabled',
+        'chat_messenger_enabled',
+        'chat_telegram_enabled',
+        'chat_whatsapp_enabled',
+        'chat_call_enabled',
     ];
 
     $stmt = db()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (:k,:v) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
     foreach ($allowed as $key) {
         $value = trim((string)($_POST[$key] ?? ''));
+        $stmt->execute([':k' => $key, ':v' => $value]);
+    }
+
+    foreach ($toggleFields as $key) {
+        $value = isset($_POST[$key]) ? '1' : '0';
         $stmt->execute([':k' => $key, ':v' => $value]);
     }
 
@@ -81,6 +96,11 @@ $settings = getSiteSettings();
       'whatsapp_number' => 'WhatsApp Number (with country code)',
       'whatsapp_notice_title' => 'WhatsApp Notice Title',
       'whatsapp_notice_text' => 'WhatsApp Notice Text',
+      'chat_widget_title' => 'Chat Widget Title',
+      'chat_widget_subtitle' => 'Chat Widget Subtitle',
+      'messenger_url' => 'Messenger URL',
+      'telegram_url' => 'Telegram URL',
+      'call_number' => 'Call Number',
       'footer_text' => 'Footer Text',
     ];
     foreach ($fields as $key => $label):
@@ -93,6 +113,27 @@ $settings = getSiteSettings();
         <?php endif; ?>
       </label>
     <?php endforeach; ?>
+
+    <div class="md:col-span-2 border rounded p-3 bg-slate-50">
+      <p class="font-semibold mb-2">Chat Channels On/Off</p>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+        <?php
+        $toggles = [
+          'chat_toggle_enabled' => 'Floating Chat Widget',
+          'chat_messenger_enabled' => 'Messenger',
+          'chat_telegram_enabled' => 'Telegram',
+          'chat_whatsapp_enabled' => 'WhatsApp',
+          'chat_call_enabled' => 'Call',
+        ];
+        foreach ($toggles as $key => $label):
+        ?>
+          <label class="flex items-center gap-2 bg-white border rounded p-2">
+            <input type="checkbox" name="<?= htmlspecialchars($key) ?>" value="1" <?= (($settings[$key] ?? '0') === '1') ? 'checked' : '' ?>>
+            <span><?= htmlspecialchars($label) ?></span>
+          </label>
+        <?php endforeach; ?>
+      </div>
+    </div>
 
     <label class="text-sm">Hero Image Upload
       <input type="file" name="hero_image" accept="image/*" class="w-full border p-2 rounded bg-white">

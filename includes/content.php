@@ -27,6 +27,16 @@ function getSiteSettings(): array
         'whatsapp_number' => '8801000000000',
         'whatsapp_notice_title' => 'দ্রুত সাড়া পেতে হোয়াটসঅ্যাপে মেসেজ করুন',
         'whatsapp_notice_text' => 'আমরা সাধারণত ৪ ঘণ্টার মধ্যে রিপ্লাই দিই',
+        'chat_widget_title' => 'দ্রুত যোগাযোগ করুন',
+        'chat_widget_subtitle' => 'যেকোনো একটি মাধ্যম বেছে নিন',
+        'chat_toggle_enabled' => '1',
+        'chat_messenger_enabled' => '1',
+        'chat_telegram_enabled' => '1',
+        'chat_whatsapp_enabled' => '1',
+        'chat_call_enabled' => '1',
+        'messenger_url' => 'https://m.me/',
+        'telegram_url' => 'https://t.me/',
+        'call_number' => '+8801000000000',
         'footer_text' => 'Premium, user-friendly, SEO-ready social media growth platform.',
     ];
 

@@ -229,9 +229,7 @@ body {
 }
 
 .wa-float {
-  position: fixed;
-  right: 1.2rem;
-  bottom: 1.1rem;
+  position: relative;
   z-index: 60;
   width: 4rem;
   height: 4rem;
@@ -239,6 +237,9 @@ body {
   display: grid;
   place-items: center;
   text-decoration: none;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .wa-pulse {
@@ -284,13 +285,16 @@ body {
   .wa-float {
     width: 3.5rem;
     height: 3.5rem;
-    right: .9rem;
-    bottom: .9rem;
   }
 
   .wa-icon {
     width: 2.8rem;
     height: 2.8rem;
+  }
+
+  .chat-float {
+    right: .9rem;
+    bottom: .9rem;
   }
 }
 
@@ -307,4 +311,67 @@ body {
     font-size: 1rem;
     word-break: break-word;
   }
+}
+
+.chat-float {
+  position: fixed;
+  right: 1.2rem;
+  bottom: 1.1rem;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: .65rem;
+}
+
+.chat-menu {
+  width: min(270px, 90vw);
+  background: rgba(255, 255, 255, .98);
+  border: 1px solid #bbf7d0;
+  border-radius: 1rem;
+  padding: .85rem;
+  box-shadow: 0 14px 34px rgba(2, 132, 84, .16);
+}
+
+.chat-menu-title {
+  font-size: .95rem;
+  color: #065f46;
+  font-weight: 800;
+}
+
+.chat-menu-subtitle {
+  color: #64748b;
+  font-size: .8rem;
+  margin-top: .15rem;
+}
+
+.chat-links {
+  margin-top: .7rem;
+  display: grid;
+  gap: .45rem;
+}
+
+.chat-link {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  border: 1px solid #d1fae5;
+  border-radius: .7rem;
+  padding: .5rem .65rem;
+  color: #065f46;
+  font-weight: 600;
+  background: #f8fffb;
+}
+
+.chat-link:hover {
+  background: #ecfdf5;
+}
+
+.chat-link-icon {
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: .45rem;
+  display: grid;
+  place-items: center;
+  background: #dcfce7;
 }

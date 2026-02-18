@@ -40,6 +40,41 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+
+
+  const chatWidget = document.querySelector('[data-chat-widget]');
+  const chatToggle = document.querySelector('[data-chat-toggle]');
+  const chatMenu = document.querySelector('[data-chat-menu]');
+  const chatIcon = document.querySelector('[data-chat-icon]');
+
+  if (chatWidget && chatToggle && chatMenu) {
+    const closeChatMenu = () => {
+      chatMenu.classList.add('hidden');
+      chatToggle.setAttribute('aria-expanded', 'false');
+      if (chatIcon) chatIcon.textContent = '💬';
+    };
+
+    const openChatMenu = () => {
+      chatMenu.classList.remove('hidden');
+      chatToggle.setAttribute('aria-expanded', 'true');
+      if (chatIcon) chatIcon.textContent = '✕';
+    };
+
+    chatToggle.addEventListener('click', () => {
+      if (chatMenu.classList.contains('hidden')) {
+        openChatMenu();
+      } else {
+        closeChatMenu();
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      if (!chatWidget.contains(event.target)) {
+        closeChatMenu();
+      }
+    });
+  }
+
   const filterButtons = document.querySelectorAll('[data-filter]');
   const portfolioItems = document.querySelectorAll('[data-item]');
   filterButtons.forEach((btn) => {

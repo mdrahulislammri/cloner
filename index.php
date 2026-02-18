@@ -17,6 +17,25 @@ $flash = $_SESSION['flash_message'] ?? null;
 unset($_SESSION['flash_message']);
 
 $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'] ?? '')) ?: '8801000000000';
+$chatEnabled = (($settings['chat_toggle_enabled'] ?? '1') === '1');
+$channels = [];
+
+if (($settings['chat_messenger_enabled'] ?? '1') === '1' && trim((string)($settings['messenger_url'] ?? '')) !== '') {
+    $channels[] = ['label' => 'Messenger', 'icon' => '💬', 'url' => (string)$settings['messenger_url']];
+}
+
+if (($settings['chat_telegram_enabled'] ?? '1') === '1' && trim((string)($settings['telegram_url'] ?? '')) !== '') {
+    $channels[] = ['label' => 'Telegram', 'icon' => '📨', 'url' => (string)$settings['telegram_url']];
+}
+
+if (($settings['chat_whatsapp_enabled'] ?? '1') === '1') {
+    $channels[] = ['label' => 'WhatsApp', 'icon' => '🟢', 'url' => 'https://wa.me/' . $whatsappNumber];
+}
+
+$callNumber = trim((string)($settings['call_number'] ?? ($settings['phone'] ?? '')));
+if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
+    $channels[] = ['label' => 'Call', 'icon' => '📞', 'url' => 'tel:' . preg_replace('/[^\d+]/', '', $callNumber)];
+}
 ?>
 <!doctype html>
 <html lang="bn">
@@ -192,7 +211,25 @@ $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'
     </div>
   </footer>
 
-  <a href="https://wa.me/<?= htmlspecialchars($whatsappNumber) ?>" class="wa-float" target="_blank" rel="noopener" aria-label="WhatsApp Chat"><span class="wa-pulse"></span><span class="wa-icon">💬</span></a>
+  <?php if ($chatEnabled && $channels !== []): ?>
+    <div class="chat-float" data-chat-widget>
+      <div class="chat-menu hidden" data-chat-menu>
+        <p class="chat-menu-title"><?= htmlspecialchars($settings['chat_widget_title']) ?></p>
+        <p class="chat-menu-subtitle"><?= htmlspecialchars($settings['chat_widget_subtitle']) ?></p>
+        <div class="chat-links">
+          <?php foreach ($channels as $channel): ?>
+            <a href="<?= htmlspecialchars($channel['url']) ?>" class="chat-link" target="_blank" rel="noopener">
+              <span class="chat-link-icon"><?= htmlspecialchars($channel['icon']) ?></span>
+              <span><?= htmlspecialchars($channel['label']) ?></span>
+            </a>
+          <?php endforeach; ?>
+        </div>
+      </div>
+      <button type="button" class="wa-float" data-chat-toggle aria-expanded="false" aria-label="Open contact options">
+        <span class="wa-pulse"></span><span class="wa-icon" data-chat-icon>💬</span>
+      </button>
+    </div>
+  <?php endif; ?>
   <script src="access/javascript/main.js"></script>
 </body>
 </html>
