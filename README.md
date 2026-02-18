@@ -44,3 +44,8 @@ php -S 127.0.0.1:8000
 - **XAMPP/WAMP ব্যবহার করলে**: project htdocs/www এ রেখে `http://localhost/cloner/index.php` open করুন।
 
 > Note: Image assets are SVG placeholders (text-based) to keep the repository binary-free.
+
+## Custom Error Pages (cPanel/Apache)
+- Included: `403.php`, `404.php`, `500.php`
+- Apache mapping is configured in `.htaccess` with `ErrorDocument` directives.
+- This works out of the box on most cPanel Apache hosting.
