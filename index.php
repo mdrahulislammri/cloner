@@ -13,6 +13,9 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
 
+$flash = $_SESSION['flash_message'] ?? null;
+unset($_SESSION['flash_message']);
+
 $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'] ?? '')) ?: '8801000000000';
 ?>
 <!doctype html>
@@ -145,6 +148,12 @@ $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="section-title text-center text-3xl lg:text-4xl"><?= htmlspecialchars($settings['contact_title']) ?></h2>
         <p class="text-center text-slate-600 mt-2"><?= htmlspecialchars($settings['contact_subtitle']) ?></p>
+
+        <?php if (is_array($flash) && isset($flash['type'], $flash['message'])): ?>
+          <div class="mb-5 rounded-xl border px-4 py-3 <?= $flash['type'] === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-700' ?>">
+            <?= htmlspecialchars((string)$flash['message']) ?>
+          </div>
+        <?php endif; ?>
 
         <div class="mt-8 grid lg:grid-cols-2 gap-6">
           <form action="submit.php" method="post" class="glass-card p-6 space-y-3">
