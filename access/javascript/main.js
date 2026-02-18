@@ -22,8 +22,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const slides = Array.from(document.querySelectorAll('[data-testimonial]'));
   const dotsWrap = document.querySelector('[data-slider-dots]');
+  const prevBtn = document.querySelector('[data-prev]');
+  const nextBtn = document.querySelector('[data-next]');
+
   if (slides.length && dotsWrap) {
     let current = 0;
+
+    const showSlide = (idx) => {
+      slides.forEach((slide, i) => slide.classList.toggle('hidden', i !== idx));
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
+      current = idx;
+    };
+
     const dots = slides.map((_, idx) => {
       const dot = document.createElement('button');
       dot.className = `dot ${idx === 0 ? 'active' : ''}`;
@@ -33,14 +43,15 @@ document.addEventListener('DOMContentLoaded', () => {
       return dot;
     });
 
-    const showSlide = (idx) => {
-      slides.forEach((slide, i) => slide.classList.toggle('hidden', i !== idx));
-      dots.forEach((dot, i) => dot.classList.toggle('active', i === idx));
-      current = idx;
-    };
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => showSlide((current - 1 + slides.length) % slides.length));
+    }
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => showSlide((current + 1) % slides.length));
+    }
 
     if (slides.length > 1) {
-      setInterval(() => showSlide((current + 1) % slides.length), 4000);
+      setInterval(() => showSlide((current + 1) % slides.length), 4500);
     }
   }
 });
