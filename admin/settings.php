@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'contact_title','contact_subtitle','phone','email','address',
         'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text',
         'chat_widget_title','chat_widget_subtitle','messenger_url','telegram_url','call_number',
-        'toast_position','toast_duration_ms','footer_text'
+        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist'
     ];
 
     $toggleFields = [
@@ -37,6 +37,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         $value = isset($_POST[$key]) ? '1' : '0';
         $stmt->execute([':k' => $key, ':v' => $value]);
     }
+
+    $stmt->execute([':k' => 'app_installed', ':v' => '1']);
 
     if (!empty($_FILES['hero_image']['name']) && is_uploaded_file($_FILES['hero_image']['tmp_name'])) {
         $mime = mime_content_type($_FILES['hero_image']['tmp_name']) ?: '';
@@ -104,11 +106,12 @@ $settings = getSiteSettings();
       'call_number' => 'Call Number',
       'toast_duration_ms' => 'Toast Auto Close (ms)',
       'footer_text' => 'Footer Text',
+      'admin_ip_whitelist' => 'Admin IP Whitelist (comma/newline separated)',
     ];
     foreach ($fields as $key => $label):
     ?>
       <label class="text-sm"><?= htmlspecialchars($label) ?>
-        <?php if (in_array($key, ['hero_subtitle','about_description','whatsapp_notice_text','footer_text'], true)): ?>
+        <?php if (in_array($key, ['hero_subtitle','about_description','whatsapp_notice_text','footer_text','admin_ip_whitelist'], true)): ?>
           <textarea name="<?= $key ?>" class="w-full border p-2 rounded"><?= htmlspecialchars($settings[$key] ?? '') ?></textarea>
         <?php else: ?>
           <input name="<?= $key ?>" value="<?= htmlspecialchars($settings[$key] ?? '') ?>" class="w-full border p-2 rounded">

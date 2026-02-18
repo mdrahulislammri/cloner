@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 require_once __DIR__ . '/db.php';
 require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/install.php';
 
 function startSecureSession(): void
 {
@@ -84,13 +85,23 @@ function ipMatchesCidr(string $ip, string $cidr): bool
 
 function getAdminIpWhitelist(): array
 {
-    $raw = trim((string)appEnv('ADMIN_IP_WHITELIST', '127.0.0.1,::1'));
-    if ($raw === '') {
-        return [];
+    $connection = db();
+
+    if ($connection) {
+        try {
+            $stmt = $connection->prepare('SELECT setting_value FROM settings WHERE setting_key = :key LIMIT 1');
+            $stmt->execute([':key' => 'admin_ip_whitelist']);
+            $stored = $stmt->fetchColumn();
+            if (is_string($stored) && trim($stored) !== '') {
+                return normalizeIpList($stored);
+            }
+        } catch (Throwable $exception) {
+            // Fallback to env-based whitelist below.
+        }
     }
 
-    $items = array_filter(array_map('trim', explode(',', $raw)), static fn(string $item): bool => $item !== '');
-    return array_values(array_unique($items));
+    $raw = trim((string)appEnv('ADMIN_IP_WHITELIST', '127.0.0.1,::1'));
+    return normalizeIpList($raw);
 }
 
 function isIpWhitelistedForAdmin(string $ip): bool
@@ -118,6 +129,11 @@ function isIpWhitelistedForAdmin(string $ip): bool
 
 function enforceAdminIpWhitelist(): void
 {
+    if (!isInstalled()) {
+        header('Location: ' . rtrim((string)appEnv('BASE_URL', BASE_URL), '/') . '/install.php');
+        exit;
+    }
+
     $ip = getClientIpAddress();
     if (isIpWhitelistedForAdmin($ip)) {
         return;

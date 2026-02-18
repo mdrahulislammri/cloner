@@ -34,8 +34,10 @@ php -S 127.0.0.1:8000
    ```bash
    php -S 127.0.0.1:8000
    ```
-4. Open `http://127.0.0.1:8000`.
-5. Admin login: `admin@example.com` / `Admin@123`.
+4. Browser এ open করুন `http://127.0.0.1:8000/install.php` এবং installer complete করুন।
+   - Installer auto-detect করে আপনার current IP whitelist এ add করবে।
+   - চাইলে setup এর সময় extra IP/CIDR add করতে পারবেন।
+5. তারপর Admin login করুন: `admin@example.com` / `Admin@123`.
 
 ## Troubleshooting (Preview না দেখালে)
 - **Port busy**: `php -S 127.0.0.1:8080` দিয়ে run করে `http://127.0.0.1:8080/index.php` open করুন।
@@ -52,13 +54,12 @@ php -S 127.0.0.1:8000
 
 
 ## Admin IP Whitelist (Security)
-Admin panel access is restricted by IP whitelist.
+- Installer run করার সময় detected IP auto-whitelist হয়।
+- অতিরিক্ত IP/CIDR Admin Panel → **Manage Settings** থেকে update করা যায় (`admin_ip_whitelist`)।
+- Whitelist এ না থাকলে admin route/login access করলে custom **403** error page দেখাবে।
 
-Set environment variable on cPanel (or Apache/PHP env):
+Optional fallback env (যদি DB setting empty থাকে):
 
 ```bash
 ADMIN_IP_WHITELIST=127.0.0.1,::1,103.25.44.10,103.25.44.0/24
 ```
-
-- Supports single IP and CIDR format.
-- If current IP is not whitelisted, admin pages return **403**.

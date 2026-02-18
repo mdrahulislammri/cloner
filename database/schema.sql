@@ -61,3 +61,9 @@ CREATE TABLE IF NOT EXISTS `contact_messages` (
 INSERT INTO `admins` (`name`, `email`, `password_hash`)
 VALUES ('Super Admin', 'admin@example.com', '$2y$12$aHnTceuv/Gf5OwtvwRJMq.ytxu1cdpjBod/.XqBlrlvfK4CL7Ka2q')
 ON DUPLICATE KEY UPDATE `email` = VALUES(`email`);
+
+INSERT INTO `settings` (`setting_key`, `setting_value`) VALUES
+('app_installed', '0'),
+('admin_ip_whitelist', '')
+ON DUPLICATE KEY UPDATE `setting_value` = VALUES(`setting_value`);
+
