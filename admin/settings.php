@@ -6,22 +6,100 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/content.php';
 requireAdmin();
 
+$uploadError = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? null) && db()) {
-    $allowed = ['site_title','hero_title','hero_subtitle','phone','email','address'];
+    $allowed = [
+        'site_title','hero_title','hero_subtitle','hero_badge','hero_cta_primary','hero_cta_secondary',
+        'about_title','about_description','portfolio_title','portfolio_subtitle','reviews_title',
+        'contact_title','contact_subtitle','phone','email','address',
+        'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text','footer_text'
+    ];
+
     $stmt = db()->prepare('INSERT INTO settings (setting_key, setting_value) VALUES (:k,:v) ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
     foreach ($allowed as $key) {
         $value = trim((string)($_POST[$key] ?? ''));
-        $stmt->execute([':k'=>$key,':v'=>$value]);
+        $stmt->execute([':k' => $key, ':v' => $value]);
     }
-    header('Location: settings.php');exit;
+
+    if (!empty($_FILES['hero_image']['name']) && is_uploaded_file($_FILES['hero_image']['tmp_name'])) {
+        $mime = mime_content_type($_FILES['hero_image']['tmp_name']) ?: '';
+        $allowedMime = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/svg+xml' => 'svg'];
+
+        if (isset($allowedMime[$mime])) {
+            $ext = $allowedMime[$mime];
+            $targetDir = __DIR__ . '/../access/img/uploads';
+            if (!is_dir($targetDir)) {
+                mkdir($targetDir, 0775, true);
+            }
+            $fileName = 'hero-' . time() . '.' . $ext;
+            $targetPath = $targetDir . '/' . $fileName;
+            if (move_uploaded_file($_FILES['hero_image']['tmp_name'], $targetPath)) {
+                $webPath = 'access/img/uploads/' . $fileName;
+                $stmt->execute([':k' => 'hero_image', ':v' => $webPath]);
+            }
+        } else {
+            $uploadError = 'Invalid hero image format.';
+        }
+    }
+
+    if ($uploadError === '') {
+        header('Location: settings.php?saved=1');
+        exit;
+    }
 }
+
 $settings = getSiteSettings();
 ?>
-<!doctype html><html><head><meta charset="UTF-8"><script src="https://cdn.tailwindcss.com"></script></head><body class="p-6 bg-slate-100"><div class="max-w-4xl mx-auto space-y-4">
-<a href="dashboard.php" class="text-green-700">← Dashboard</a><h1 class="text-2xl font-bold">Settings</h1>
-<form method="post" class="bg-white p-4 rounded shadow grid gap-2">
-<?php foreach(['site_title','hero_title','hero_subtitle','phone','email','address'] as $key): ?>
-<input name="<?= $key ?>" value="<?= htmlspecialchars($settings[$key] ?? '') ?>" class="border p-2" placeholder="<?= $key ?>">
-<?php endforeach; ?>
-<input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><button class="bg-green-600 text-white p-2 rounded">Save</button></form>
-</div></body></html>
+<!doctype html>
+<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="https://cdn.tailwindcss.com"></script></head>
+<body class="p-4 md:p-6 bg-slate-100">
+<div class="max-w-5xl mx-auto space-y-4">
+  <a href="dashboard.php" class="text-green-700">← Dashboard</a>
+  <h1 class="text-2xl font-bold">Manage Homepage Settings</h1>
+  <?php if (isset($_GET['saved'])): ?><p class="text-green-700 bg-green-50 p-2 rounded">Saved successfully.</p><?php endif; ?>
+  <?php if ($uploadError !== ''): ?><p class="text-red-700 bg-red-50 p-2 rounded"><?= htmlspecialchars($uploadError) ?></p><?php endif; ?>
+
+  <form method="post" enctype="multipart/form-data" class="bg-white p-4 rounded shadow grid md:grid-cols-2 gap-3">
+    <?php
+    $fields = [
+      'site_title' => 'Site Title',
+      'hero_badge' => 'Hero Badge',
+      'hero_title' => 'Hero Title',
+      'hero_subtitle' => 'Hero Subtitle',
+      'hero_cta_primary' => 'Hero Primary Button',
+      'hero_cta_secondary' => 'Hero Secondary Button',
+      'about_title' => 'About Title',
+      'portfolio_title' => 'Portfolio Title',
+      'portfolio_subtitle' => 'Portfolio Subtitle',
+      'reviews_title' => 'Review Title',
+      'contact_title' => 'Contact Title',
+      'contact_subtitle' => 'Contact Subtitle',
+      'phone' => 'Phone',
+      'email' => 'Email',
+      'address' => 'Address',
+      'whatsapp_number' => 'WhatsApp Number (with country code)',
+      'whatsapp_notice_title' => 'WhatsApp Notice Title',
+      'whatsapp_notice_text' => 'WhatsApp Notice Text',
+      'footer_text' => 'Footer Text',
+    ];
+    foreach ($fields as $key => $label):
+    ?>
+      <label class="text-sm"><?= htmlspecialchars($label) ?>
+        <?php if (in_array($key, ['hero_subtitle','about_description','whatsapp_notice_text','footer_text'], true)): ?>
+          <textarea name="<?= $key ?>" class="w-full border p-2 rounded"><?= htmlspecialchars($settings[$key] ?? '') ?></textarea>
+        <?php else: ?>
+          <input name="<?= $key ?>" value="<?= htmlspecialchars($settings[$key] ?? '') ?>" class="w-full border p-2 rounded">
+        <?php endif; ?>
+      </label>
+    <?php endforeach; ?>
+
+    <label class="text-sm">Hero Image Upload
+      <input type="file" name="hero_image" accept="image/*" class="w-full border p-2 rounded bg-white">
+    </label>
+
+    <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">
+    <div class="md:col-span-2"><button class="bg-green-600 text-white p-2 rounded">Save All</button></div>
+  </form>
+</div>
+</body></html>
