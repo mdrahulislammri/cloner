@@ -169,8 +169,12 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <p class="text-center text-slate-600 mt-2"><?= htmlspecialchars($settings['contact_subtitle']) ?></p>
 
         <?php if (is_array($flash) && isset($flash['type'], $flash['message'])): ?>
-          <div class="mb-5 rounded-xl border px-4 py-3 <?= $flash['type'] === 'success' ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-700' ?>">
-            <?= htmlspecialchars((string)$flash['message']) ?>
+          <div class="toast-stack" data-toast-stack>
+            <div class="toast-item <?= $flash['type'] === 'success' ? 'toast-success' : 'toast-error' ?>" data-toast role="status" aria-live="polite">
+              <span class="toast-dot" aria-hidden="true"></span>
+              <span><?= htmlspecialchars((string)$flash['message']) ?></span>
+              <button type="button" class="toast-close" data-toast-close aria-label="Close notification">×</button>
+            </div>
           </div>
         <?php endif; ?>
 

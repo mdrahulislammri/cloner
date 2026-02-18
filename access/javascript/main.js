@@ -42,6 +42,30 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+
+  const toast = document.querySelector('[data-toast]');
+  const toastClose = document.querySelector('[data-toast-close]');
+
+  if (toast) {
+    const removeToast = () => {
+      toast.classList.add('toast-leave');
+      window.setTimeout(() => {
+        const wrap = toast.closest('[data-toast-stack]');
+        if (wrap) {
+          wrap.remove();
+        }
+      }, 220);
+    };
+
+    const timer = window.setTimeout(removeToast, 4000);
+    if (toastClose) {
+      toastClose.addEventListener('click', () => {
+        window.clearTimeout(timer);
+        removeToast();
+      });
+    }
+  }
+
   const chatWidget = document.querySelector('[data-chat-widget]');
   const chatToggle = document.querySelector('[data-chat-toggle]');
   const chatMenu = document.querySelector('[data-chat-menu]');
