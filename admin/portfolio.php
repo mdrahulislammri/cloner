@@ -83,7 +83,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'image/png' => 'png',
         'image/x-png' => 'png',
         'image/webp' => 'webp',
-        'image/svg+xml' => 'svg',
     ];
 
     if (isset($_FILES['image_file']) && (int)($_FILES['image_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
@@ -100,7 +99,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
             } else {
                 $ext = detectPortfolioImageExtension($tmpPath, $originalName, $allowedMime);
                 if ($ext === null) {
-                    $error = 'Invalid image format. Allowed: jpg, png, webp, svg.';
+                    $error = 'Invalid image format. Allowed: jpg, png, webp.';
                 } else {
                     $targetDir = __DIR__ . '/../access/img/uploads';
                     if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {

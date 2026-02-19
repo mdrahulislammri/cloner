@@ -97,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'image/png' => 'png',
         'image/x-png' => 'png',
         'image/webp' => 'webp',
-        'image/svg+xml' => 'svg',
         'image/x-icon' => 'ico',
         'image/vnd.microsoft.icon' => 'ico',
     ];
@@ -138,7 +137,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
 
             $ext = detectUploadedFileExtension($tmpPath, $originalName, $allowedMime);
             if ($ext === null) {
-                $uploadError = 'Invalid file format for ' . $meta['setting'] . '. Allowed: jpg, png, webp, svg, ico.';
+                $uploadError = 'Invalid file format for ' . $meta['setting'] . '. Allowed: jpg, png, webp, ico.';
                 break;
             }
 
