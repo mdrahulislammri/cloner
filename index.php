@@ -7,6 +7,8 @@ redirectToInstallerIfNeeded();
 
 require_once __DIR__ . '/includes/content.php';
 
+trackWebsiteVisit();
+
 $settings = getSiteSettings();
 $services = getServices();
 $portfolio = getPortfolio();

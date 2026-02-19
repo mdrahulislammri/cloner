@@ -29,5 +29,6 @@ $currentIp = getClientIpAddress();
   <a class="block text-green-700" href="testimonials.php">Manage Testimonials</a>
   <a class="block text-green-700" href="settings.php">Manage Settings</a>
   <a class="block text-green-700" href="messages.php">View Messages</a>
+  <a class="block text-green-700" href="monitoring.php">Visitor Monitoring</a>
 </div>
 </div></body></html>

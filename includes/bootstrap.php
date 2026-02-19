@@ -5,6 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/config.php';
 require_once __DIR__ . '/install.php';
 require_once __DIR__ . '/toast.php';
+require_once __DIR__ . '/analytics.php';
 
 function installUrl(): string
 {
