@@ -16,6 +16,7 @@ Professional Bangla PHP + MySQL marketing website with a secure admin panel.
 - `access/img/hero-illustration.svg`, `access/img/portfolio-placeholder.svg`
 - `admin/*`
 - `database/schema.sql`
+  - includes tables: `admins`, `settings`, `services`, `portfolio_items`, `testimonials`, `contact_messages`, `media_uploads`
 
 ## Quick Preview (No DB needed)
 > Homepage preview দেখার জন্য MySQL import বাধ্যতামূলক না। DB না থাকলেও fallback content দিয়ে `index.php` render হবে।
@@ -65,6 +66,7 @@ php -S 127.0.0.1:8000
 - `ADMIN_IP_WHITELIST` controls which IP/CIDR can access admin routes/login.
 - `TRUSTED_PROXIES` (optional) should include only your reverse-proxy IP/CIDR. When set, forwarded IP headers are trusted only for these proxies.
 - Admin login has built-in brute-force protection: 5 failed attempts (per IP+email) within 15 minutes triggers a 15-minute lock.
+- When `.env` exists, empty OS-level env values will no longer override it.
 
 ## Troubleshooting (Preview না দেখালে)
 - **Port busy**: `php -S 127.0.0.1:8080` দিয়ে run করে `http://127.0.0.1:8080/index.php` open করুন।

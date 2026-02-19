@@ -49,6 +49,18 @@ CREATE TABLE IF NOT EXISTS `testimonials` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+
+CREATE TABLE IF NOT EXISTS `media_uploads` (
+  `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `setting_key` VARCHAR(120) NOT NULL,
+  `file_path` VARCHAR(255) NOT NULL,
+  `file_ext` VARCHAR(20) NOT NULL,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_media_uploads_setting_key` (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `contact_messages` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(120) NOT NULL,

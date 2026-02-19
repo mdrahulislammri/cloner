@@ -13,9 +13,20 @@ function installRequirements(): array
         ['label' => 'PHP 8.1+', 'ok' => version_compare(PHP_VERSION, '8.1.0', '>=')],
         ['label' => 'PDO extension', 'ok' => extension_loaded('pdo')],
         ['label' => 'PDO MySQL extension', 'ok' => extension_loaded('pdo_mysql')],
-        ['label' => '.env writable', 'ok' => is_writable(dirname(__DIR__))],
+        ['label' => '.env writable', 'ok' => isEnvWritable()],
         ['label' => 'Upload directory writable', 'ok' => is_dir($uploadDir) ? is_writable($uploadDir) : is_writable(dirname($uploadDir))],
     ];
+}
+
+
+function isEnvWritable(): bool
+{
+    $envPath = dirname(__DIR__) . '/.env';
+    if (is_file($envPath)) {
+        return is_writable($envPath);
+    }
+
+    return is_writable(dirname($envPath));
 }
 
 function installRequirementsPassed(): bool
@@ -140,8 +151,15 @@ function writeEnvConfig(array $dbConfig, string $baseUrl, string $whitelist): vo
     }
 
     $content = implode(PHP_EOL, $lines) . PHP_EOL;
-    if (file_put_contents($envPath, $content) === false) {
-        throw new RuntimeException('Unable to write .env file. Check file permissions.');
+
+    $tmpPath = $envPath . '.tmp';
+    if (file_put_contents($tmpPath, $content, LOCK_EX) === false) {
+        throw new RuntimeException('Unable to write temporary .env file. Check file permissions.');
+    }
+
+    if (!@rename($tmpPath, $envPath)) {
+        @unlink($tmpPath);
+        throw new RuntimeException('Unable to update .env file. Check file permissions.');
     }
 }
 
