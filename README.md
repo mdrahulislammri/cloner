@@ -43,8 +43,8 @@ php -S 127.0.0.1:8000
 
 ## Installer Features
 - Full installation wizard at `install/index.php`
-- Server requirement checks (PHP/PDO/PDO-MySQL/.env writable/upload dir writable)
-- DB configuration form + automatic `.env` generation
+- Server requirement checks (PHP/PDO/PDO-MySQL/upload dir writable)
+- DB configuration form + automatic `includes/config.php` DB constant update
 - Automatic schema import (`database/schema.sql`)
 - Admin account setup from installer form
 - Navbar/Favicon control from Admin Settings (path or upload)
@@ -66,7 +66,6 @@ php -S 127.0.0.1:8000
 - `ADMIN_IP_WHITELIST` controls which IP/CIDR can access admin routes/login.
 - `TRUSTED_PROXIES` (optional) should include only your reverse-proxy IP/CIDR. When set, forwarded IP headers are trusted only for these proxies.
 - Admin login has built-in brute-force protection: 5 failed attempts (per IP+email) within 15 minutes triggers a 15-minute lock.
-- When `.env` exists, empty OS-level env values will no longer override it.
 
 ## Troubleshooting (Preview না দেখালে)
 - **Port busy**: `php -S 127.0.0.1:8080` দিয়ে run করে `http://127.0.0.1:8080/index.php` open করুন।

@@ -72,12 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 upsertSettingWithConnection($connection, 'admin_ip_whitelist', $whitelist);
                 upsertSettingWithConnection($connection, 'app_installed', '1');
 
-                writeEnvConfig($dbConfig, $form['base_url'] === '' ? '/' : $form['base_url'], $whitelist);
+                writeConfigPhp($dbConfig, $form['base_url'] === '' ? '/' : $form['base_url']);
 
                 $success = 'Installation completed successfully. Redirecting to admin login...';
                 header('Refresh: 2; url=../admin/login.php?installed=1');
             } catch (Throwable $exception) {
-                $error = 'Install failed. Please check DB credentials, file permissions, and schema compatibility.';
+                $error = 'Install failed. Please check DB credentials, config.php file permissions, and schema compatibility.';
             }
         }
     }
