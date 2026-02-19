@@ -11,6 +11,54 @@ requireAdmin();
 
 $uploadError = '';
 
+
+function uploadErrorMessage(int $errorCode): string
+{
+    return match ($errorCode) {
+        UPLOAD_ERR_INI_SIZE, UPLOAD_ERR_FORM_SIZE => 'Uploaded file is too large.',
+        UPLOAD_ERR_PARTIAL => 'File upload was interrupted. Please retry.',
+        UPLOAD_ERR_NO_FILE => 'No file selected for upload.',
+        UPLOAD_ERR_NO_TMP_DIR => 'Temporary upload directory is missing on server.',
+        UPLOAD_ERR_CANT_WRITE => 'Server could not write uploaded file.',
+        UPLOAD_ERR_EXTENSION => 'File upload blocked by a server extension.',
+        default => 'Unknown file upload error.',
+    };
+}
+
+function detectUploadedFileExtension(string $tmpPath, string $originalName, array $allowedMime): ?string
+{
+    $mime = '';
+    if (function_exists('finfo_open')) {
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        if ($finfo !== false) {
+            $detected = finfo_file($finfo, $tmpPath);
+            finfo_close($finfo);
+            if (is_string($detected)) {
+                $mime = trim($detected);
+            }
+        }
+    }
+
+    if ($mime === '' && function_exists('mime_content_type')) {
+        $detected = mime_content_type($tmpPath);
+        if (is_string($detected)) {
+            $mime = trim($detected);
+        }
+    }
+
+    if ($mime !== '' && isset($allowedMime[$mime])) {
+        return $allowedMime[$mime];
+    }
+
+    $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
+    $allowedExtensions = array_values(array_unique($allowedMime));
+    if ($ext !== '' && in_array($ext, $allowedExtensions, true)) {
+        return $ext;
+    }
+
+    return null;
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? null) && db()) {
     $allowed = [
         'site_title','hero_title','hero_subtitle','hero_badge','hero_cta_primary','hero_cta_secondary',
@@ -18,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'contact_title','contact_subtitle','phone','email','address',
         'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text',
         'chat_widget_title','chat_widget_subtitle','messenger_url','telegram_url','call_number',
-        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist','nav_logo','favicon'
+        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist','nav_logo','favicon','trade_license_number','trade_license_qr'
     ];
 
     $toggleFields = [
@@ -43,40 +91,75 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
 
     $stmt->execute([':k' => 'app_installed', ':v' => '1']);
 
-    $allowedMime = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp', 'image/svg+xml' => 'svg', 'image/x-icon' => 'ico'];
+    $allowedMime = [
+        'image/jpeg' => 'jpg',
+        'image/pjpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/x-png' => 'png',
+        'image/webp' => 'webp',
+        'image/x-icon' => 'ico',
+        'image/vnd.microsoft.icon' => 'ico',
+    ];
     $targetDir = __DIR__ . '/../access/img/uploads';
-    if (!is_dir($targetDir)) {
-        mkdir($targetDir, 0775, true);
+    if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+        $uploadError = 'Upload folder could not be created.';
+    }
+
+    if ($uploadError === '' && !is_writable($targetDir)) {
+        $uploadError = 'Upload folder is not writable.';
     }
 
     $uploadMap = [
         'hero_image' => ['setting' => 'hero_image', 'prefix' => 'hero'],
         'nav_logo_file' => ['setting' => 'nav_logo', 'prefix' => 'logo'],
         'favicon_file' => ['setting' => 'favicon', 'prefix' => 'favicon'],
+        'trade_license_qr_file' => ['setting' => 'trade_license_qr', 'prefix' => 'trade-license-qr'],
     ];
 
-    foreach ($uploadMap as $inputName => $meta) {
-        if (empty($_FILES[$inputName]['name']) || !is_uploaded_file($_FILES[$inputName]['tmp_name'])) {
-            continue;
+    if ($uploadError === '') {
+        foreach ($uploadMap as $inputName => $meta) {
+            if (!isset($_FILES[$inputName]) || (int)($_FILES[$inputName]['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+                continue;
+            }
+
+            $fileError = (int)($_FILES[$inputName]['error'] ?? UPLOAD_ERR_OK);
+            if ($fileError !== UPLOAD_ERR_OK) {
+                $uploadError = uploadErrorMessage($fileError);
+                break;
+            }
+
+            $tmpPath = (string)($_FILES[$inputName]['tmp_name'] ?? '');
+            $originalName = (string)($_FILES[$inputName]['name'] ?? '');
+            if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
+                $uploadError = 'Invalid upload payload for ' . $meta['setting'] . '.';
+                break;
+            }
+
+            $ext = detectUploadedFileExtension($tmpPath, $originalName, $allowedMime);
+            if ($ext === null) {
+                $uploadError = 'Invalid file format for ' . $meta['setting'] . '. Allowed: jpg, png, webp, ico.';
+                break;
+            }
+
+            $fileName = $meta['prefix'] . '-' . time() . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
+            $targetPath = $targetDir . '/' . $fileName;
+
+            if (!move_uploaded_file($tmpPath, $targetPath)) {
+                $uploadError = 'Failed to upload ' . $meta['setting'] . '. Check folder permission.';
+                break;
+            }
+
+            $webPath = 'access/img/uploads/' . $fileName;
+            $stmt->execute([':k' => $meta['setting'], ':v' => $webPath]);
+            $stmt->execute([':k' => $meta['setting'] . '_updated_at', ':v' => date('c')]);
+
+            try {
+                $mediaStmt = db()->prepare('INSERT INTO media_uploads (setting_key, file_path, file_ext) VALUES (:k, :p, :e)');
+                $mediaStmt->execute([':k' => $meta['setting'], ':p' => $webPath, ':e' => $ext]);
+            } catch (Throwable $exception) {
+                // Keep settings save successful even if media log table is unavailable.
+            }
         }
-
-        $mime = mime_content_type($_FILES[$inputName]['tmp_name']) ?: '';
-        if (!isset($allowedMime[$mime])) {
-            $uploadError = 'Invalid file format for ' . $meta['setting'] . '.';
-            break;
-        }
-
-        $ext = $allowedMime[$mime];
-        $fileName = $meta['prefix'] . '-' . time() . '-' . bin2hex(random_bytes(3)) . '.' . $ext;
-        $targetPath = $targetDir . '/' . $fileName;
-
-        if (!move_uploaded_file($_FILES[$inputName]['tmp_name'], $targetPath)) {
-            $uploadError = 'Failed to upload ' . $meta['setting'] . '.';
-            break;
-        }
-
-        $webPath = 'access/img/uploads/' . $fileName;
-        $stmt->execute([':k' => $meta['setting'], ':v' => $webPath]);
     }
 
     if ($uploadError === '') {
@@ -127,6 +210,8 @@ $settings = getSiteSettings();
       'admin_ip_whitelist' => 'Admin IP Whitelist (comma/newline separated)',
       'nav_logo' => 'Navbar Logo Path (optional)',
       'favicon' => 'Favicon Path (optional)',
+      'trade_license_number' => 'Trade License Number',
+      'trade_license_qr' => 'Trade License QR Image Path (optional)',
     ];
     foreach ($fields as $key => $label):
     ?>
@@ -187,6 +272,10 @@ $settings = getSiteSettings();
 
     <label class="text-sm">Favicon Upload
       <input type="file" name="favicon_file" accept="image/*,.ico" class="w-full border p-2 rounded bg-white">
+    </label>
+
+    <label class="text-sm">Trade License QR Upload
+      <input type="file" name="trade_license_qr_file" accept="image/*" class="w-full border p-2 rounded bg-white">
     </label>
 
     <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">

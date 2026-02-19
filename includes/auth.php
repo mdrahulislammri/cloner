@@ -26,14 +26,22 @@ function startSecureSession(): void
 
 function getClientIpAddress(): string
 {
-    $candidates = [
+    $remoteAddr = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+    if ($remoteAddr === '' || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
+        return '0.0.0.0';
+    }
+
+    if (!isTrustedProxyIp($remoteAddr)) {
+        return $remoteAddr;
+    }
+
+    $forwardedCandidates = [
         (string)($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''),
         (string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''),
         (string)($_SERVER['HTTP_X_REAL_IP'] ?? ''),
-        (string)($_SERVER['REMOTE_ADDR'] ?? ''),
     ];
 
-    foreach ($candidates as $candidate) {
+    foreach ($forwardedCandidates as $candidate) {
         if ($candidate === '') {
             continue;
         }
@@ -46,7 +54,110 @@ function getClientIpAddress(): string
         }
     }
 
-    return '0.0.0.0';
+    return $remoteAddr;
+}
+
+function isTrustedProxyIp(string $ip): bool
+{
+    $raw = trim((string)appEnv('TRUSTED_PROXIES', ''));
+    if ($raw === '') {
+        return false;
+    }
+
+    $trustedProxies = normalizeIpList($raw);
+    foreach ($trustedProxies as $trustedProxy) {
+        if (strpos($trustedProxy, '/') !== false && ipMatchesCidr($ip, $trustedProxy)) {
+            return true;
+        }
+
+        if ($trustedProxy === $ip) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function adminLoginThrottleStoragePath(): string
+{
+    return rtrim(sys_get_temp_dir(), '/\\') . '/greentech_admin_login_throttle.json';
+}
+
+function readAdminLoginThrottleState(): array
+{
+    $path = adminLoginThrottleStoragePath();
+    if (!is_file($path)) {
+        return [];
+    }
+
+    $raw = file_get_contents($path);
+    if (!is_string($raw) || trim($raw) === '') {
+        return [];
+    }
+
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function writeAdminLoginThrottleState(array $state): void
+{
+    $path = adminLoginThrottleStoragePath();
+    file_put_contents($path, json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
+}
+
+function adminLoginThrottleKey(string $ip, string $email): string
+{
+    return hash('sha256', strtolower(trim($email)) . '|' . $ip);
+}
+
+function getAdminLoginThrottleStatus(string $ip, string $email): array
+{
+    $state = readAdminLoginThrottleState();
+    $key = adminLoginThrottleKey($ip, $email);
+    $entry = $state[$key] ?? ['count' => 0, 'first_attempt_at' => 0, 'blocked_until' => 0];
+    $now = time();
+
+    if (($entry['blocked_until'] ?? 0) > $now) {
+        return ['blocked' => true, 'retry_after' => (int)$entry['blocked_until'] - $now];
+    }
+
+    if (($entry['first_attempt_at'] ?? 0) > 0 && ($now - (int)$entry['first_attempt_at']) > 900) {
+        unset($state[$key]);
+        writeAdminLoginThrottleState($state);
+    }
+
+    return ['blocked' => false, 'retry_after' => 0];
+}
+
+function recordAdminLoginFailure(string $ip, string $email): void
+{
+    $state = readAdminLoginThrottleState();
+    $key = adminLoginThrottleKey($ip, $email);
+    $now = time();
+    $entry = $state[$key] ?? ['count' => 0, 'first_attempt_at' => $now, 'blocked_until' => 0];
+
+    if (($entry['first_attempt_at'] ?? 0) <= 0 || ($now - (int)$entry['first_attempt_at']) > 900) {
+        $entry = ['count' => 0, 'first_attempt_at' => $now, 'blocked_until' => 0];
+    }
+
+    $entry['count'] = (int)($entry['count'] ?? 0) + 1;
+    if ($entry['count'] >= 5) {
+        $entry['blocked_until'] = $now + 900;
+    }
+
+    $state[$key] = $entry;
+    writeAdminLoginThrottleState($state);
+}
+
+function clearAdminLoginFailures(string $ip, string $email): void
+{
+    $state = readAdminLoginThrottleState();
+    $key = adminLoginThrottleKey($ip, $email);
+
+    if (isset($state[$key])) {
+        unset($state[$key]);
+        writeAdminLoginThrottleState($state);
+    }
 }
 
 function ipMatchesCidr(string $ip, string $cidr): bool
@@ -165,16 +276,25 @@ function requireAdmin(): void
     }
 }
 
-function attemptAdminLogin(string $email, string $password): bool
+function attemptAdminLogin(string $email, string $password, ?string &$error = null): bool
 {
     enforceAdminIpWhitelist();
     startSecureSession();
-    $admin = fetchOneRow('SELECT id, name, password_hash FROM admins WHERE email = :email LIMIT 1', [':email' => $email]);
-
-    if (!$admin || !password_verify($password, $admin['password_hash'])) {
+    $ip = getClientIpAddress();
+    $throttle = getAdminLoginThrottleStatus($ip, $email);
+    if ($throttle['blocked']) {
+        $error = 'Too many failed attempts. Try again after ' . $throttle['retry_after'] . ' seconds.';
         return false;
     }
 
+    $admin = fetchOneRow('SELECT id, name, password_hash FROM admins WHERE email = :email LIMIT 1', [':email' => $email]);
+
+    if (!$admin || !password_verify($password, $admin['password_hash'])) {
+        recordAdminLoginFailure($ip, $email);
+        return false;
+    }
+
+    clearAdminLoginFailures($ip, $email);
     session_regenerate_id(true);
     $_SESSION['admin_id'] = (int)$admin['id'];
     $_SESSION['admin_name'] = $admin['name'];

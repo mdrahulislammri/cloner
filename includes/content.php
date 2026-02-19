@@ -43,6 +43,8 @@ function getSiteSettings(): array
         'toast_position' => 'top-right',
         'toast_duration_ms' => '4000',
         'footer_text' => 'Premium, user-friendly, SEO-ready social media growth platform.',
+        'trade_license_number' => '',
+        'trade_license_qr' => '',
         'app_installed' => '0',
         'admin_ip_whitelist' => '127.0.0.1,::1',
     ];
