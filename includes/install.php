@@ -67,6 +67,28 @@ function upsertSetting(string $key, string $value): bool
     }
 }
 
+
+function isStrongAdminPassword(string $password): bool
+{
+    if (strlen($password) < 8) {
+        return false;
+    }
+
+    if (!preg_match('/[A-Z]/', $password)) {
+        return false;
+    }
+
+    if (!preg_match('/[a-z]/', $password)) {
+        return false;
+    }
+
+    if (!preg_match('/\d/', $password)) {
+        return false;
+    }
+
+    return true;
+}
+
 function normalizeIpList(string $rawList): array
 {
     $items = preg_split('/[\r\n,]+/', $rawList) ?: [];
@@ -81,7 +103,11 @@ function normalizeIpList(string $rawList): array
         if (strpos($candidate, '/') !== false) {
             [$ip, $mask] = array_pad(explode('/', $candidate, 2), 2, '');
             if (filter_var($ip, FILTER_VALIDATE_IP) && ctype_digit($mask)) {
-                $normalized[] = $ip . '/' . $mask;
+                $maskValue = (int)$mask;
+                $maxMask = str_contains($ip, ':') ? 128 : 32;
+                if ($maskValue >= 0 && $maskValue <= $maxMask) {
+                    $normalized[] = $ip . '/' . $maskValue;
+                }
             }
             continue;
         }
