@@ -279,12 +279,14 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
             <?php if ($tradeLicenseNumber !== '' || $tradeLicenseQr !== ''): ?>
               <div class="mt-4 p-4 rounded-2xl bg-white border border-emerald-100">
                 <h4 class="font-bold text-emerald-800">Trade License</h4>
-                <?php if ($tradeLicenseNumber !== ''): ?>
-                  <p class="text-sm text-slate-700 mt-2">License No: <span class="font-semibold"><?= htmlspecialchars($tradeLicenseNumber) ?></span></p>
-                <?php endif; ?>
-                <?php if ($tradeLicenseQr !== ''): ?>
-                  <img src="<?= htmlspecialchars($tradeLicenseQr) ?>" alt="Trade license QR code" class="mt-3 w-28 h-28 rounded border border-emerald-100 object-cover" loading="lazy" decoding="async">
-                <?php endif; ?>
+                <p class="text-sm text-slate-700 mt-2">License No: <span class="font-semibold"><?= htmlspecialchars($tradeLicenseNumber !== '' ? $tradeLicenseNumber : 'Not provided yet') ?></span></p>
+                <div class="mt-3">
+                  <?php if ($tradeLicenseQr !== ''): ?>
+                    <img src="<?= htmlspecialchars($tradeLicenseQr) ?>" alt="Trade license QR code" class="w-28 h-28 rounded border border-emerald-100 object-cover" loading="lazy" decoding="async">
+                  <?php else: ?>
+                    <div class="w-28 h-28 rounded border border-dashed border-slate-300 text-xs text-slate-500 grid place-items-center">QR not uploaded</div>
+                  <?php endif; ?>
+                </div>
               </div>
             <?php endif; ?>
           </div>
