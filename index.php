@@ -295,11 +295,29 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
     </section>
   </main>
 
-  <footer class="bg-emerald-900 text-emerald-50 mt-8">
-    <div class="max-w-7xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-7">
-      <div><h3 class="font-bold text-xl"><?= htmlspecialchars($settings['site_title']) ?></h3><p class="mt-2 text-emerald-100/90"><?= htmlspecialchars($settings['footer_text']) ?></p></div>
-      <div><a class="underline" href="admin/login.php">Secure Admin Panel</a></div>
-      <div class="text-sm">© <?= date('Y') ?> All rights reserved.</div>
+  <footer class="mt-10 border-t border-emerald-800/70 bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800 text-emerald-50">
+    <div class="max-w-7xl mx-auto px-4 py-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div>
+        <h3 class="text-2xl font-extrabold tracking-tight"><?= htmlspecialchars($settings['site_title']) ?></h3>
+        <p class="mt-3 text-emerald-100/90 leading-relaxed max-w-md"><?= htmlspecialchars($settings['footer_text']) ?></p>
+      </div>
+
+      <div>
+        <p class="text-sm uppercase tracking-[0.2em] text-emerald-200/90">Quick Contact</p>
+        <ul class="mt-4 space-y-2 text-emerald-100/95">
+          <li><span class="text-emerald-300">📞</span> <?= htmlspecialchars($settings['phone']) ?></li>
+          <li><span class="text-emerald-300">✉️</span> <?= htmlspecialchars($settings['email']) ?></li>
+          <li><span class="text-emerald-300">📍</span> <?= htmlspecialchars($settings['address']) ?></li>
+        </ul>
+      </div>
+
+      <div class="lg:text-right">
+        <p class="text-sm uppercase tracking-[0.2em] text-emerald-200/90">Access</p>
+        <a class="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-50/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-50/20" href="admin/login.php">
+          <span>🔒</span><span>Secure Admin Login</span>
+        </a>
+        <p class="mt-5 text-sm text-emerald-100/80">© <?= date('Y') ?> All rights reserved.</p>
+      </div>
     </div>
   </footer>
 
