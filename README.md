@@ -48,6 +48,7 @@ php -S 127.0.0.1:8000
 - Automatic schema import (`database/schema.sql`)
 - Admin account setup from installer form
 - Navbar/Favicon control from Admin Settings (path or upload)
+- Trade License number + QR display control from Admin Settings
 - Auto-detected admin IP whitelist + manual IP/CIDR add
 - Global install lock: until installation completes, all pages redirect to installer
 

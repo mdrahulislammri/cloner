@@ -66,7 +66,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'contact_title','contact_subtitle','phone','email','address',
         'whatsapp_number','whatsapp_notice_title','whatsapp_notice_text',
         'chat_widget_title','chat_widget_subtitle','messenger_url','telegram_url','call_number',
-        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist','nav_logo','favicon'
+        'toast_position','toast_duration_ms','footer_text','admin_ip_whitelist','nav_logo','favicon','trade_license_number','trade_license_qr'
     ];
 
     $toggleFields = [
@@ -114,6 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         'hero_image' => ['setting' => 'hero_image', 'prefix' => 'hero'],
         'nav_logo_file' => ['setting' => 'nav_logo', 'prefix' => 'logo'],
         'favicon_file' => ['setting' => 'favicon', 'prefix' => 'favicon'],
+        'trade_license_qr_file' => ['setting' => 'trade_license_qr', 'prefix' => 'trade-license-qr'],
     ];
 
     if ($uploadError === '') {
@@ -210,6 +211,8 @@ $settings = getSiteSettings();
       'admin_ip_whitelist' => 'Admin IP Whitelist (comma/newline separated)',
       'nav_logo' => 'Navbar Logo Path (optional)',
       'favicon' => 'Favicon Path (optional)',
+      'trade_license_number' => 'Trade License Number',
+      'trade_license_qr' => 'Trade License QR Image Path (optional)',
     ];
     foreach ($fields as $key => $label):
     ?>
@@ -270,6 +273,10 @@ $settings = getSiteSettings();
 
     <label class="text-sm">Favicon Upload
       <input type="file" name="favicon_file" accept="image/*,.ico" class="w-full border p-2 rounded bg-white">
+    </label>
+
+    <label class="text-sm">Trade License QR Upload
+      <input type="file" name="trade_license_qr_file" accept="image/*" class="w-full border p-2 rounded bg-white">
     </label>
 
     <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">

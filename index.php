@@ -27,6 +27,9 @@ $chatEnabled = (($settings['chat_toggle_enabled'] ?? '1') === '1');
 $channels = [];
 
 
+$tradeLicenseNumber = trim((string)($settings['trade_license_number'] ?? ''));
+$tradeLicenseQr = trim((string)($settings['trade_license_qr'] ?? ''));
+
 $toastEnabled = (($settings['toast_enabled'] ?? '1') === '1');
 $toastPosition = (string)($settings['toast_position'] ?? 'top-right');
 $toastDuration = (int)($settings['toast_duration_ms'] ?? 4000);
@@ -272,6 +275,18 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
               <p class="font-extrabold text-lg"><?= htmlspecialchars($settings['whatsapp_notice_title']) ?></p>
               <p class="mt-1 text-slate-600"><?= htmlspecialchars($settings['whatsapp_notice_text']) ?></p>
             </div>
+
+            <?php if ($tradeLicenseNumber !== '' || $tradeLicenseQr !== ''): ?>
+              <div class="mt-4 p-4 rounded-2xl bg-white border border-emerald-100">
+                <h4 class="font-bold text-emerald-800">Trade License</h4>
+                <?php if ($tradeLicenseNumber !== ''): ?>
+                  <p class="text-sm text-slate-700 mt-2">License No: <span class="font-semibold"><?= htmlspecialchars($tradeLicenseNumber) ?></span></p>
+                <?php endif; ?>
+                <?php if ($tradeLicenseQr !== ''): ?>
+                  <img src="<?= htmlspecialchars($tradeLicenseQr) ?>" alt="Trade license QR code" class="mt-3 w-28 h-28 rounded border border-emerald-100 object-cover" loading="lazy" decoding="async">
+                <?php endif; ?>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>
