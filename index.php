@@ -15,12 +15,7 @@ $testimonials = getTestimonials();
 $navLogo = trim((string)($settings['nav_logo'] ?? '')) ?: 'access/img/site-logo.svg';
 $favicon = trim((string)($settings['favicon'] ?? '')) ?: 'access/img/favicon.svg';
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
-
-$flash = $_SESSION['flash_message'] ?? null;
-unset($_SESSION['flash_message']);
+$flashMessages = flashConsume();
 
 $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'] ?? '')) ?: '8801000000000';
 $chatEnabled = (($settings['chat_toggle_enabled'] ?? '1') === '1');
@@ -242,13 +237,35 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <h2 class="section-title text-center text-3xl lg:text-4xl"><?= htmlspecialchars($settings['contact_title']) ?></h2>
         <p class="text-center text-slate-600 mt-2"><?= htmlspecialchars($settings['contact_subtitle']) ?></p>
 
-        <?php if ($toastEnabled && is_array($flash) && isset($flash['type'], $flash['message'])): ?>
+        <?php if ($toastEnabled && $flashMessages !== []): ?>
           <div class="toast-stack toast-<?= htmlspecialchars($toastPosition) ?>" data-toast-stack data-toast-duration="<?= (int)$toastDuration ?>">
-            <div class="toast-item <?= $flash['type'] === 'success' ? 'toast-success' : 'toast-error' ?>" data-toast role="status" aria-live="polite">
-              <span class="toast-dot" aria-hidden="true"></span>
-              <span><?= htmlspecialchars((string)$flash['message']) ?></span>
-              <button type="button" class="toast-close" data-toast-close aria-label="Close notification">×</button>
-            </div>
+            <?php foreach ($flashMessages as $flash): ?>
+              <?php
+              $toastType = $flash['type'];
+              $toastClass = match ($toastType) {
+                  'success' => 'toast-success',
+                  'warning' => 'toast-warning',
+                  'error' => 'toast-error',
+                  default => 'toast-info',
+              };
+              $toastIcon = match ($toastType) {
+                  'success' => '✅',
+                  'warning' => '⚠️',
+                  'error' => '⛔',
+                  default => 'ℹ️',
+              };
+              ?>
+              <div class="toast-item <?= $toastClass ?>" data-toast role="status" aria-live="polite">
+                <span class="toast-dot" aria-hidden="true"></span>
+                <div class="toast-content">
+                  <p class="toast-title"><?= htmlspecialchars($flash['title'] !== '' ? $flash['title'] : 'Notification') ?></p>
+                  <p><?= htmlspecialchars($flash['message']) ?></p>
+                </div>
+                <span class="toast-icon" aria-hidden="true"><?= htmlspecialchars($toastIcon) ?></span>
+                <button type="button" class="toast-close" data-toast-close aria-label="Close notification">×</button>
+                <span class="toast-progress" data-toast-progress></span>
+              </div>
+            <?php endforeach; ?>
           </div>
         <?php endif; ?>
 

@@ -43,30 +43,72 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-  const toast = document.querySelector('[data-toast]');
-  const toastClose = document.querySelector('[data-toast-close]');
   const toastStack = document.querySelector('[data-toast-stack]');
+  const toasts = Array.from(document.querySelectorAll('[data-toast]'));
 
-  if (toast) {
-    const removeToast = () => {
-      toast.classList.add('toast-leave');
-      window.setTimeout(() => {
-        const wrap = toast.closest('[data-toast-stack]');
-        if (wrap) {
-          wrap.remove();
+  if (toastStack && toasts.length) {
+    const toastDuration = Number.parseInt(toastStack.dataset.toastDuration || '4000', 10);
+    const safeDuration = Number.isFinite(toastDuration) ? Math.min(Math.max(toastDuration, 1000), 15000) : 4000;
+
+    const setupToast = (toast, index) => {
+      const closeBtn = toast.querySelector('[data-toast-close]');
+      const progressBar = toast.querySelector('[data-toast-progress]');
+      let timer;
+      let startedAt = 0;
+      let remaining = safeDuration + (index * 160);
+
+      const removeToast = () => {
+        toast.classList.add('toast-leave');
+        window.setTimeout(() => {
+          toast.remove();
+          if (!toastStack.querySelector('[data-toast]')) {
+            toastStack.remove();
+          }
+        }, 220);
+      };
+
+      const startTimer = () => {
+        window.clearTimeout(timer);
+        startedAt = Date.now();
+        if (progressBar) {
+          progressBar.style.transitionDuration = `${remaining}ms`;
+          progressBar.style.transform = 'scaleX(0)';
         }
-      }, 220);
+        timer = window.setTimeout(removeToast, remaining);
+      };
+
+      const pauseTimer = () => {
+        window.clearTimeout(timer);
+        remaining -= Date.now() - startedAt;
+        if (remaining < 150) remaining = 150;
+        if (progressBar) {
+          const ratio = remaining / (safeDuration + (index * 160));
+          progressBar.style.transitionDuration = '0ms';
+          progressBar.style.transform = `scaleX(${Math.max(0, Math.min(1, ratio))})`;
+        }
+      };
+
+      if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+          window.clearTimeout(timer);
+          removeToast();
+        });
+      }
+
+      toast.addEventListener('mouseenter', pauseTimer);
+      toast.addEventListener('mouseleave', startTimer);
+      startTimer();
     };
 
-    const toastDuration = Number.parseInt(toastStack?.dataset.toastDuration || '4000', 10);
-    const safeDuration = Number.isFinite(toastDuration) ? Math.min(Math.max(toastDuration, 1000), 15000) : 4000;
-    const timer = window.setTimeout(removeToast, safeDuration);
-    if (toastClose) {
-      toastClose.addEventListener('click', () => {
-        window.clearTimeout(timer);
-        removeToast();
-      });
-    }
+    toasts.forEach((toast, index) => setupToast(toast, index));
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        const firstToast = toastStack.querySelector('[data-toast]');
+        const closeBtn = firstToast?.querySelector('[data-toast-close]');
+        if (closeBtn) closeBtn.click();
+      }
+    });
   }
 
   const chatWidget = document.querySelector('[data-chat-widget]');
