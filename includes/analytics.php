@@ -2,56 +2,7 @@
 
 declare(strict_types=1);
 
-function analyticsFilePath(): string
-{
-    return __DIR__ . '/../storage/visit-analytics.json';
-}
-
-function ensureAnalyticsStorage(): void
-{
-    $dir = dirname(analyticsFilePath());
-    if (!is_dir($dir)) {
-        @mkdir($dir, 0775, true);
-    }
-}
-
-function readVisitAnalytics(): array
-{
-    $file = analyticsFilePath();
-    if (!is_file($file)) {
-        return ['events' => []];
-    }
-
-    $raw = @file_get_contents($file);
-    if (!is_string($raw) || $raw === '') {
-        return ['events' => []];
-    }
-
-    $data = json_decode($raw, true);
-    if (!is_array($data) || !isset($data['events']) || !is_array($data['events'])) {
-        return ['events' => []];
-    }
-
-    return $data;
-}
-
-function writeVisitAnalytics(array $data): bool
-{
-    ensureAnalyticsStorage();
-
-    $file = analyticsFilePath();
-    $tmp = $file . '.tmp';
-    $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
-    if (!is_string($json)) {
-        return false;
-    }
-
-    if (@file_put_contents($tmp, $json, LOCK_EX) === false) {
-        return false;
-    }
-
-    return @rename($tmp, $file);
-}
+require_once __DIR__ . '/db.php';
 
 function detectDeviceType(string $userAgent): string
 {
@@ -74,6 +25,36 @@ function analyticsClientKey(): string
     return hash('sha256', $ip . '|' . $ua);
 }
 
+function ensureVisitAnalyticsTable(): void
+{
+    $connection = db();
+    if (!$connection) {
+        return;
+    }
+
+    static $ready = false;
+    if ($ready) {
+        return;
+    }
+
+    $connection->exec(
+        'CREATE TABLE IF NOT EXISTS visitor_analytics (
+            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+            client_key CHAR(64) NOT NULL,
+            path VARCHAR(255) NOT NULL,
+            referrer VARCHAR(255) NOT NULL,
+            device VARCHAR(20) NOT NULL,
+            browser VARCHAR(255) NOT NULL,
+            visited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (id),
+            KEY idx_visitor_analytics_visited_at (visited_at),
+            KEY idx_visitor_analytics_client_key (client_key)
+        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
+    );
+
+    $ready = true;
+}
+
 function trackWebsiteVisit(): void
 {
     if (PHP_SAPI === 'cli') {
@@ -84,99 +65,122 @@ function trackWebsiteVisit(): void
         return;
     }
 
-    $now = time();
     $path = (string)parse_url((string)($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH);
-
     if ($path !== '/' && $path !== '/index.php') {
         return;
     }
 
-    $data = readVisitAnalytics();
-    $events = $data['events'] ?? [];
-
-    $clientKey = analyticsClientKey();
-    $lastSeenTs = 0;
-    foreach (array_reverse($events) as $event) {
-        if (($event['client_key'] ?? '') === $clientKey) {
-            $lastSeenTs = (int)($event['timestamp'] ?? 0);
-            break;
-        }
-    }
-
-    if ($lastSeenTs > 0 && ($now - $lastSeenTs) < 900) {
+    $connection = db();
+    if (!$connection) {
         return;
     }
 
-    $userAgent = (string)($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown');
-    $events[] = [
-        'timestamp' => $now,
-        'path' => $path,
-        'referrer' => (string)($_SERVER['HTTP_REFERER'] ?? 'Direct'),
-        'device' => detectDeviceType($userAgent),
-        'browser' => substr($userAgent, 0, 160),
-        'client_key' => $clientKey,
-    ];
+    ensureVisitAnalyticsTable();
 
-    $cutoff = $now - (60 * 60 * 24 * 30);
-    $events = array_values(array_filter($events, static function (array $event) use ($cutoff): bool {
-        return (int)($event['timestamp'] ?? 0) >= $cutoff;
-    }));
+    $clientKey = analyticsClientKey();
+    $userAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'), 0, 255);
+    $device = detectDeviceType($userAgent);
+    $referrer = substr((string)($_SERVER['HTTP_REFERER'] ?? 'Direct'), 0, 255);
 
-    writeVisitAnalytics(['events' => $events]);
+    $dedupeCheck = $connection->prepare(
+        'SELECT id FROM visitor_analytics
+         WHERE client_key = :client_key
+           AND visited_at >= (NOW() - INTERVAL 15 MINUTE)
+         ORDER BY id DESC
+         LIMIT 1'
+    );
+    $dedupeCheck->execute([':client_key' => $clientKey]);
+    if ($dedupeCheck->fetch()) {
+        return;
+    }
+
+    $insert = $connection->prepare(
+        'INSERT INTO visitor_analytics (client_key, path, referrer, device, browser)
+         VALUES (:client_key, :path, :referrer, :device, :browser)'
+    );
+    $insert->execute([
+        ':client_key' => $clientKey,
+        ':path' => substr($path, 0, 255),
+        ':referrer' => $referrer,
+        ':device' => $device,
+        ':browser' => $userAgent,
+    ]);
+
+    $connection->exec('DELETE FROM visitor_analytics WHERE visited_at < (NOW() - INTERVAL 30 DAY)');
 }
 
 function getVisitMonitoringSummary(): array
 {
-    $data = readVisitAnalytics();
-    $events = $data['events'] ?? [];
+    $empty = [
+        'total_visits' => 0,
+        'today_visits' => 0,
+        'device_counts' => ['Desktop' => 0, 'Mobile' => 0, 'Tablet' => 0],
+        'daily_labels' => [],
+        'daily_values' => [],
+        'recent' => [],
+    ];
 
-    $totalVisits = count($events);
-    $todayStart = strtotime('today');
-    $todayVisits = 0;
+    $connection = db();
+    if (!$connection) {
+        return $empty;
+    }
 
+    ensureVisitAnalyticsTable();
+
+    $totalRow = fetchOneRow('SELECT COUNT(*) AS c FROM visitor_analytics');
+    $todayRow = fetchOneRow('SELECT COUNT(*) AS c FROM visitor_analytics WHERE DATE(visited_at) = CURRENT_DATE()');
+
+    $deviceRows = fetchAllRows('SELECT device, COUNT(*) AS c FROM visitor_analytics GROUP BY device');
     $deviceCounts = ['Desktop' => 0, 'Mobile' => 0, 'Tablet' => 0];
-    $dailyVisits = [];
-    $recent = [];
+    foreach ($deviceRows as $row) {
+        $device = (string)($row['device'] ?? 'Desktop');
+        $deviceCounts[$device] = (int)($row['c'] ?? 0);
+    }
 
+    $dailyRows = fetchAllRows(
+        'SELECT DATE(visited_at) AS d, COUNT(*) AS c
+         FROM visitor_analytics
+         WHERE visited_at >= (CURRENT_DATE() - INTERVAL 6 DAY)
+         GROUP BY DATE(visited_at)
+         ORDER BY d ASC'
+    );
+
+    $dailyMap = [];
+    foreach ($dailyRows as $row) {
+        $dailyMap[(string)$row['d']] = (int)$row['c'];
+    }
+
+    $dailyLabels = [];
+    $dailyValues = [];
     for ($i = 6; $i >= 0; $i--) {
         $day = date('Y-m-d', strtotime("-$i days"));
-        $dailyVisits[$day] = 0;
+        $dailyLabels[] = date('d M', strtotime($day));
+        $dailyValues[] = $dailyMap[$day] ?? 0;
     }
 
-    foreach ($events as $event) {
-        $ts = (int)($event['timestamp'] ?? 0);
-        if ($ts >= $todayStart) {
-            $todayVisits++;
-        }
+    $recentRows = fetchAllRows(
+        'SELECT visited_at, device, referrer, path
+         FROM visitor_analytics
+         ORDER BY id DESC
+         LIMIT 10'
+    );
 
-        $device = (string)($event['device'] ?? 'Desktop');
-        if (!isset($deviceCounts[$device])) {
-            $deviceCounts[$device] = 0;
-        }
-        $deviceCounts[$device]++;
-
-        $dayKey = date('Y-m-d', $ts);
-        if (isset($dailyVisits[$dayKey])) {
-            $dailyVisits[$dayKey]++;
-        }
-    }
-
-    $recentEvents = array_slice(array_reverse($events), 0, 10);
-    foreach ($recentEvents as $event) {
+    $recent = [];
+    foreach ($recentRows as $row) {
         $recent[] = [
-            'time' => date('d M Y, h:i A', (int)$event['timestamp']),
-            'device' => (string)($event['device'] ?? 'Unknown'),
-            'referrer' => (string)($event['referrer'] ?? 'Direct'),
-            'path' => (string)($event['path'] ?? '/'),
+            'time' => date('d M Y, h:i A', strtotime((string)$row['visited_at'])),
+            'device' => (string)($row['device'] ?? 'Unknown'),
+            'referrer' => (string)($row['referrer'] ?? 'Direct'),
+            'path' => (string)($row['path'] ?? '/'),
         ];
     }
 
     return [
-        'total_visits' => $totalVisits,
-        'today_visits' => $todayVisits,
+        'total_visits' => (int)($totalRow['c'] ?? 0),
+        'today_visits' => (int)($todayRow['c'] ?? 0),
         'device_counts' => $deviceCounts,
-        'daily_labels' => array_map(static fn(string $day): string => date('d M', strtotime($day)), array_keys($dailyVisits)),
-        'daily_values' => array_values($dailyVisits),
+        'daily_labels' => $dailyLabels,
+        'daily_values' => $dailyValues,
         'recent' => $recent,
     ];
 }

@@ -61,6 +61,20 @@ CREATE TABLE IF NOT EXISTS `media_uploads` (
   KEY `idx_media_uploads_setting_key` (`setting_key`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+
+CREATE TABLE IF NOT EXISTS `visitor_analytics` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `client_key` CHAR(64) NOT NULL,
+  `path` VARCHAR(255) NOT NULL,
+  `referrer` VARCHAR(255) NOT NULL,
+  `device` VARCHAR(20) NOT NULL,
+  `browser` VARCHAR(255) NOT NULL,
+  `visited_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_visitor_analytics_visited_at` (`visited_at`),
+  KEY `idx_visitor_analytics_client_key` (`client_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE IF NOT EXISTS `contact_messages` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(120) NOT NULL,
