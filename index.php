@@ -17,6 +17,15 @@ $testimonials = getTestimonials();
 $navLogo = trim((string)($settings['nav_logo'] ?? '')) ?: 'access/img/site-logo.svg';
 $favicon = trim((string)($settings['favicon'] ?? '')) ?: 'access/img/favicon.svg';
 
+$faviconExt = strtolower(pathinfo($favicon, PATHINFO_EXTENSION));
+$faviconMime = match ($faviconExt) {
+    'ico' => 'image/x-icon',
+    'png' => 'image/png',
+    'jpg', 'jpeg' => 'image/jpeg',
+    'webp' => 'image/webp',
+    default => 'image/svg+xml',
+};
+
 $flashMessages = flashConsume();
 
 $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'] ?? '')) ?: '8801000000000';
@@ -94,7 +103,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
   <meta name="robots" content="index,follow,max-image-preview:large">
   <meta name="author" content="<?= htmlspecialchars($settings['site_title']) ?>">
   <meta name="theme-color" content="#10b981">
-  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars($favicon) ?>">
+  <link rel="icon" type="<?= htmlspecialchars($faviconMime) ?>" href="<?= htmlspecialchars($favicon) ?>">
   <link rel="shortcut icon" href="<?= htmlspecialchars($favicon) ?>">
   <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl) ?>">
 
