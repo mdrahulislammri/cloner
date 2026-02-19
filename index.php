@@ -168,7 +168,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
       <div class="relative">
         <div class="absolute -top-10 -right-4 w-40 h-40 rounded-full bg-emerald-200/60 blur-3xl"></div>
         <div class="hero-visual glass-card p-4">
-          <img src="<?= htmlspecialchars($settings['hero_image']) ?>" alt="<?= htmlspecialchars($settings['site_title']) ?> hero showcase" class="w-full h-[420px] object-cover rounded-[2rem] border border-emerald-100" fetchpriority="high" decoding="async">
+          <img src="<?= htmlspecialchars($settings['hero_image']) ?>" alt="<?= htmlspecialchars($settings['site_title']) ?> hero showcase" class="hero-main-image rounded-[2rem] border border-emerald-100" fetchpriority="high" decoding="async">
         </div>
       </div>
     </div>
