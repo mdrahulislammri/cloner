@@ -329,10 +329,8 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
       </div>
 
       <div class="lg:text-right">
-        <p class="text-sm uppercase tracking-[0.2em] text-emerald-200/90">Access</p>
-        <a class="mt-4 inline-flex items-center gap-2 rounded-full border border-emerald-300/40 bg-emerald-50/10 px-4 py-2 text-sm font-semibold text-emerald-100 transition hover:bg-emerald-50/20" href="admin/login.php">
-          <span>🔒</span><span>Secure Admin Login</span>
-        </a>
+        <p class="text-sm uppercase tracking-[0.2em] text-emerald-200/90">Info</p>
+        <p class="mt-4 text-sm text-emerald-100/90">Trusted digital services for your business growth.</p>
         <p class="mt-5 text-sm text-emerald-100/80">© <?= date('Y') ?> All rights reserved.</p>
       </div>
     </div>
