@@ -188,12 +188,19 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
     <section id="services" class="section-wrap section-alt">
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="section-title text-center text-3xl lg:text-4xl">আমাদের সার্ভিসসমূহ</h2>
-        <div class="mt-9 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="mt-9 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <?php foreach ($services as $service): ?>
-            <article class="glass-card p-6 hover:-translate-y-1 transition duration-300">
-              <div class="service-icon"><?= htmlspecialchars($service['icon']) ?></div>
-              <h3 class="mt-4 font-bold text-xl text-emerald-800"><?= htmlspecialchars($service['title']) ?></h3>
-              <p class="mt-2 text-slate-600"><?= htmlspecialchars($service['description']) ?></p>
+            <article class="service-card group">
+              <div class="service-card-top">
+                <div class="service-icon"><?= htmlspecialchars($service['icon']) ?></div>
+                <span class="service-badge">Premium Service</span>
+              </div>
+              <h3 class="mt-5 font-extrabold text-xl text-slate-900 leading-snug"><?= htmlspecialchars($service['title']) ?></h3>
+              <p class="mt-3 text-slate-600 leading-relaxed"><?= htmlspecialchars($service['description']) ?></p>
+              <div class="service-card-footer">
+                <span>Learn more</span>
+                <span aria-hidden="true">→</span>
+              </div>
             </article>
           <?php endforeach; ?>
         </div>
