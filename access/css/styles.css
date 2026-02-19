@@ -30,6 +30,32 @@ body {
   display: block !important;
 }
 
+.mobile-menu-panel {
+  background: #ffffff;
+  border: 1px solid #d1fae5;
+  border-radius: 1rem;
+  padding: .5rem;
+  box-shadow: 0 14px 30px rgba(2, 132, 99, 0.1);
+  display: grid;
+  gap: .45rem;
+}
+
+.mobile-menu-link {
+  display: block;
+  padding: .72rem .78rem;
+  border-radius: .7rem;
+  border: 1px solid transparent;
+  font-weight: 700;
+  color: #065f46;
+}
+
+.mobile-menu-link:hover,
+.mobile-menu-link:focus-visible {
+  background: #ecfdf5;
+  border-color: #a7f3d0;
+  outline: none;
+}
+
 .hero-tech {
   background:
     radial-gradient(900px 430px at 10% -15%, rgba(16, 185, 129, .22), transparent 60%),

@@ -139,17 +139,17 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <li><a class="hover:text-emerald-700" href="#portfolio">পোর্টফোলিও</a></li>
         <li><a class="hover:text-emerald-700" href="#reviews">রিভিউ</a></li>
         <li><a class="hover:text-emerald-700" href="#contact">যোগাযোগ</a></li>
-        <li><a href="admin/login.php" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Admin</a></li>
       </ul>
     </nav>
 
-    <div id="mobile-menu" data-mobile-menu class="mobile-menu hidden md:hidden border-t border-emerald-100 bg-white px-4 py-3 space-y-2 text-sm">
-      <a class="block" href="#about">আমার সম্পর্কে</a>
-      <a class="block" href="#services">সার্ভিস</a>
-      <a class="block" href="#portfolio">পোর্টফোলিও</a>
-      <a class="block" href="#reviews">রিভিউ</a>
-      <a class="block" href="#contact">যোগাযোগ</a>
-      <a class="inline-block mt-2 px-3 py-2 rounded-lg bg-emerald-600 text-white" href="admin/login.php">Admin</a>
+    <div id="mobile-menu" data-mobile-menu class="mobile-menu hidden md:hidden border-t border-emerald-100 bg-white px-4 pb-4 pt-3 text-sm">
+      <div class="mobile-menu-panel">
+        <a class="mobile-menu-link" href="#about">আমার সম্পর্কে</a>
+        <a class="mobile-menu-link" href="#services">সার্ভিস</a>
+        <a class="mobile-menu-link" href="#portfolio">পোর্টফোলিও</a>
+        <a class="mobile-menu-link" href="#reviews">রিভিউ</a>
+        <a class="mobile-menu-link" href="#contact">যোগাযোগ</a>
+      </div>
     </div>
   </header>
 
