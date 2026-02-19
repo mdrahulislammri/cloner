@@ -161,8 +161,8 @@ $items = fetchAllRows('SELECT * FROM portfolio_items ORDER BY id DESC');
     <div class="border-b pb-2">
       <strong><?= htmlspecialchars($row['title']) ?></strong> (<?= htmlspecialchars($row['category']) ?>)
       <div class="text-xs text-gray-500 break-all"><?= htmlspecialchars($row['image_path']) ?></div>
-      <a class="text-red-600 text-sm" href="portfolio.php?delete=<?= (int)$row['id'] ?>" onclick="return confirm('Delete item?')">Delete</a>
+      <a class="text-red-600 text-sm" href="portfolio.php?delete=<?= (int)$row['id'] ?>" data-confirm-action data-confirm-title="Delete portfolio item" data-confirm-message="এই পোর্টফোলিও আইটেমটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No">Delete</a>
     </div>
   <?php endforeach; ?>
 </div>
-</div></body></html>
+</div><script src="../access/javascript/admin-confirm.js"></script></body></html>
