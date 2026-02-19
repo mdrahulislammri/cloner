@@ -25,34 +25,27 @@ function analyticsClientKey(): string
     return hash('sha256', $ip . '|' . $ua);
 }
 
-function ensureVisitAnalyticsTable(): void
+function hasVisitAnalyticsTable(): bool
 {
+    static $cache = null;
+    if ($cache !== null) {
+        return $cache;
+    }
+
     $connection = db();
     if (!$connection) {
-        return;
+        $cache = false;
+        return false;
     }
 
-    static $ready = false;
-    if ($ready) {
-        return;
+    try {
+        $stmt = $connection->query("SHOW TABLES LIKE 'visitor_analytics'");
+        $cache = $stmt !== false && (bool)$stmt->fetchColumn();
+    } catch (Throwable $exception) {
+        $cache = false;
     }
 
-    $connection->exec(
-        'CREATE TABLE IF NOT EXISTS visitor_analytics (
-            id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
-            client_key CHAR(64) NOT NULL,
-            path VARCHAR(255) NOT NULL,
-            referrer VARCHAR(255) NOT NULL,
-            device VARCHAR(20) NOT NULL,
-            browser VARCHAR(255) NOT NULL,
-            visited_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-            PRIMARY KEY (id),
-            KEY idx_visitor_analytics_visited_at (visited_at),
-            KEY idx_visitor_analytics_client_key (client_key)
-        ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci'
-    );
-
-    $ready = true;
+    return $cache;
 }
 
 function trackWebsiteVisit(): void
@@ -75,7 +68,9 @@ function trackWebsiteVisit(): void
         return;
     }
 
-    ensureVisitAnalyticsTable();
+    if (!hasVisitAnalyticsTable()) {
+        return;
+    }
 
     $clientKey = analyticsClientKey();
     $userAgent = substr((string)($_SERVER['HTTP_USER_AGENT'] ?? 'Unknown'), 0, 255);
@@ -125,7 +120,9 @@ function getVisitMonitoringSummary(): array
         return $empty;
     }
 
-    ensureVisitAnalyticsTable();
+    if (!hasVisitAnalyticsTable()) {
+        return $empty;
+    }
 
     $totalRow = fetchOneRow('SELECT COUNT(*) AS c FROM visitor_analytics');
     $todayRow = fetchOneRow('SELECT COUNT(*) AS c FROM visitor_analytics WHERE DATE(visited_at) = CURRENT_DATE()');

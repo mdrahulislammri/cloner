@@ -55,12 +55,6 @@ function detectPortfolioImageExtension(string $tmpPath, string $originalName, ar
     return null;
 }
 
-if (isset($_GET['delete']) && db()) {
-    db()->prepare('DELETE FROM portfolio_items WHERE id = :id')->execute([':id' => (int)$_GET['delete']]);
-    header('Location: portfolio.php');
-    exit;
-}
-
 $error = '';
 $old = [
     'title' => '',
@@ -69,6 +63,12 @@ $old = [
 ];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? null)) {
+    if (isset($_POST['delete_id']) && db()) {
+        db()->prepare('DELETE FROM portfolio_items WHERE id = :id')->execute([':id' => (int)$_POST['delete_id']]);
+        header('Location: portfolio.php');
+        exit;
+    }
+
     $title = trim((string)($_POST['title'] ?? ''));
     $category = trim((string)($_POST['category'] ?? 'Social'));
     $image = trim((string)($_POST['image_path'] ?? ''));
@@ -161,7 +161,7 @@ $items = fetchAllRows('SELECT * FROM portfolio_items ORDER BY id DESC');
     <div class="border-b pb-2">
       <strong><?= htmlspecialchars($row['title']) ?></strong> (<?= htmlspecialchars($row['category']) ?>)
       <div class="text-xs text-gray-500 break-all"><?= htmlspecialchars($row['image_path']) ?></div>
-      <a class="text-red-600 text-sm" href="portfolio.php?delete=<?= (int)$row['id'] ?>" data-confirm-action data-confirm-title="Delete portfolio item" data-confirm-message="এই পোর্টফোলিও আইটেমটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No">Delete</a>
+      <button type="button" class="text-red-600 text-sm" data-confirm-action data-confirm-title="Delete portfolio item" data-confirm-message="এই পোর্টফোলিও আইটেমটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No" data-confirm-form-id="delete-portfolio-<?= (int)$row['id'] ?>">Delete</button><form id="delete-portfolio-<?= (int)$row['id'] ?>" method="post" class="hidden"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>"></form>
     </div>
   <?php endforeach; ?>
 </div>
