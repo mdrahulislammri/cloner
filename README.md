@@ -54,14 +54,32 @@ php -S 127.0.0.1:8000
 
 
 ## cPanel SEO/Server File Update (Important)
-এই 4টা file deploy করার পর নিজের domain অনুযায়ী edit করবেন:
-- `.htaccess` (security headers + sensitive file protection + custom error pages)
-- `robots.txt` (admin/install disallow + sitemap URL)
-- `sitemap.xml` (full domain links)
+Deploy করার আগে নিচের file গুলো update করে নিন:
+- `.htaccess`
+- `robots.txt`
+- `sitemap.xml`
+- `LICENSE`
+
+### 1) `.htaccess` (already included)
+- Sensitive file access block করা আছে (`.env`, `composer.lock`, `.htaccess` etc.)
+- `includes/` এবং `database/` directory direct access deny করা আছে
+- Security headers enabled (`X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`)
+- HTTPS redirect enabled for non-localhost domains
+- Static asset cache rules added
+
+### 2) `robots.txt`
+- `admin`, `install`, `includes`, `database` path disallow করা আছে
+- Sitemap URL provided
+
+### 3) `sitemap.xml`
+- Homepage + main section anchors included (`services`, `portfolio`, `contact`)
+- `lastmod`, `priority`, `changefreq` set করা আছে
+
+### 4) `LICENSE`
+- MIT license included for distribution clarity
 
 **Must change before go-live:**
-- `https://example.com` → আপনার আসল domain
-
+- `https://example.com` → আপনার real domain
 
 ## Security Notes
 - `ADMIN_IP_WHITELIST` controls which IP/CIDR can access admin routes/login.
@@ -92,3 +110,9 @@ Optional fallback env (যদি DB setting empty থাকে):
 ```bash
 ADMIN_IP_WHITELIST=127.0.0.1,::1,103.25.44.10,103.25.44.0/24
 ```
+
+## Production Checklist
+- Replace placeholder domain in `robots.txt` and `sitemap.xml`.
+- Verify `.htaccess` HTTPS redirect works with your SSL setup.
+- Confirm admin and install URLs are blocked from indexing.
+- Keep `includes/config.php` writable only during installation, then set restrictive permissions.
