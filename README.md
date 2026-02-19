@@ -60,6 +60,12 @@ php -S 127.0.0.1:8000
 **Must change before go-live:**
 - `https://example.com` → আপনার আসল domain
 
+
+## Security Notes
+- `ADMIN_IP_WHITELIST` controls which IP/CIDR can access admin routes/login.
+- `TRUSTED_PROXIES` (optional) should include only your reverse-proxy IP/CIDR. When set, forwarded IP headers are trusted only for these proxies.
+- Admin login has built-in brute-force protection: 5 failed attempts (per IP+email) within 15 minutes triggers a 15-minute lock.
+
 ## Troubleshooting (Preview না দেখালে)
 - **Port busy**: `php -S 127.0.0.1:8080` দিয়ে run করে `http://127.0.0.1:8080/index.php` open করুন।
 - **Wrong path**: command অবশ্যই project root (`/workspace/cloner`) থেকে run করবেন।
