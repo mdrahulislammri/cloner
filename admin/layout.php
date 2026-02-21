@@ -24,7 +24,7 @@ function adminLayoutStart(string $title, string $active = ''): void
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title><?= htmlspecialchars($title) ?> | GreenTech Admin</title>
+  <title><?= htmlspecialchars($title) ?> | Admin</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
   <style>
@@ -73,7 +73,7 @@ function adminLayoutStart(string $title, string $active = ''): void
             <div class="h-9 w-9 bg-emerald-500 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-900/50 rotate-3">
                 <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             </div>
-            <h1 class="text-xl font-black tracking-tighter uppercase italic">Green<span class="text-emerald-400">Tech</span></h1>
+            <h1 class="text-xl font-black tracking-tighter uppercase italic">Admin<span class="text-emerald-400">Panel</span></h1>
         </div>
         <button type="button" data-admin-close class="md:hidden text-emerald-300 hover:text-white text-3xl transition-colors">&times;</button>
       </div>
