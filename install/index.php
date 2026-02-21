@@ -41,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Invalid security token.';
     } elseif (!installRequirementsPassed()) {
         $error = 'Server requirement check failed. Please fix red items and retry.';
-    } elseif ($form['admin_password'] === '' || strlen($form['admin_password']) < 8) {
-        $error = 'Admin password must be at least 8 characters.';
+    } elseif (!isStrongAdminPassword($form['admin_password'])) {
+        $error = 'Admin password must be at least 8 characters and include uppercase, lowercase, and number.';
     } elseif (!filter_var($form['admin_email'], FILTER_VALIDATE_EMAIL)) {
         $error = 'Please provide a valid admin email.';
     } else {
@@ -72,12 +72,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 upsertSettingWithConnection($connection, 'admin_ip_whitelist', $whitelist);
                 upsertSettingWithConnection($connection, 'app_installed', '1');
 
-                writeEnvConfig($dbConfig, $form['base_url'] === '' ? '/' : $form['base_url'], $whitelist);
+                writeConfigPhp($dbConfig, $form['base_url'] === '' ? '/' : $form['base_url']);
 
                 $success = 'Installation completed successfully. Redirecting to admin login...';
                 header('Refresh: 2; url=../admin/login.php?installed=1');
             } catch (Throwable $exception) {
-                $error = 'Install failed. Please check DB credentials, file permissions, and schema compatibility.';
+                $error = 'Install failed. Please check DB credentials, config.php file permissions, and schema compatibility.';
             }
         }
     }
@@ -142,6 +142,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </label>
         <label class="text-sm md:col-span-2">Admin Password (min 8)
           <input type="password" name="admin_password" class="w-full border rounded p-2" required>
+          <span class="text-xs text-slate-500">Minimum 8 chars with uppercase, lowercase and number.</span>
         </label>
       </div>
 
