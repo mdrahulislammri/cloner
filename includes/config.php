@@ -28,6 +28,11 @@ function envFromFile(string $key): ?string
                 [$k, $v] = explode('=', $line, 2);
                 $k = trim($k);
                 $v = trim($v);
+
+                if (str_starts_with($k, 'export ')) {
+                    $k = trim(substr($k, 7));
+                }
+
                 if ($k === '') {
                     continue;
                 }
@@ -47,12 +52,16 @@ function envFromFile(string $key): ?string
 function appEnv(string $key, ?string $default = null): ?string
 {
     $value = getenv($key);
-    if ($value !== false) {
+    if ($value !== false && $value !== '') {
         return $value;
     }
 
     $fileValue = envFromFile($key);
-    return $fileValue ?? $default;
+    if ($fileValue !== null && $fileValue !== '') {
+        return $fileValue;
+    }
+
+    return $default;
 }
 
 function csrfToken(): string
