@@ -170,12 +170,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
 
 $settings = getSiteSettings();
 ?>
-<!doctype html>
-<html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="https://cdn.tailwindcss.com"></script></head>
-<body class="p-4 md:p-6 bg-slate-100">
-<div class="max-w-5xl mx-auto space-y-4">
-  <a href="dashboard.php" class="text-green-700">← Dashboard</a>
-  <h1 class="text-2xl font-bold">Manage Homepage Settings</h1>
+<?php
+require_once __DIR__ . '/layout.php';
+adminLayoutStart('Settings', 'settings');
+?>
   <?php if (isset($_GET['saved'])): ?><p class="text-green-700 bg-green-50 p-2 rounded">Saved successfully.</p><?php endif; ?>
   <?php if ($uploadError !== ''): ?><p class="text-red-700 bg-red-50 p-2 rounded"><?= htmlspecialchars($uploadError) ?></p><?php endif; ?>
 
@@ -281,5 +279,4 @@ $settings = getSiteSettings();
     <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">
     <div class="md:col-span-2"><button class="bg-green-600 text-white p-2 rounded">Save All</button></div>
   </form>
-</div>
-</body></html>
+<?php adminLayoutEnd(); ?>

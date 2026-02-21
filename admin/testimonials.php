@@ -27,9 +27,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
     exit;
 }
 $items = fetchAllRows('SELECT * FROM testimonials ORDER BY id DESC');
+
+require_once __DIR__ . '/layout.php';
+adminLayoutStart('Testimonials', 'testimonials');
 ?>
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="https://cdn.tailwindcss.com"></script></head><body class="p-6 bg-slate-100"><div class="max-w-4xl mx-auto space-y-4">
-<a href="dashboard.php" class="text-green-700">← Dashboard</a><h1 class="text-2xl font-bold">Testimonials</h1>
-<form method="post" class="bg-white p-4 rounded shadow grid gap-2"><input name="client_name" class="border p-2" placeholder="Client Name" required><input name="designation" class="border p-2" placeholder="Designation"><textarea name="content" class="border p-2" placeholder="Review" required></textarea><input name="rating" type="number" min="1" max="5" class="border p-2" value="5"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><button class="bg-green-600 text-white p-2 rounded">Add</button></form>
-<div class="bg-white p-4 rounded shadow"><?php foreach($items as $row): ?><div class="border-b py-2"><strong><?= htmlspecialchars($row['client_name']) ?></strong> (<?= (int)$row['rating'] ?>/5): <?= htmlspecialchars($row['content']) ?> <button type="button" class="text-red-600 text-sm" data-confirm-action data-confirm-title="Delete testimonial" data-confirm-message="এই রিভিউটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No" data-confirm-form-id="delete-testimonial-<?= (int)$row['id'] ?>">Delete</button><form id="delete-testimonial-<?= (int)$row['id'] ?>" method="post" class="hidden"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>"></form></div><?php endforeach; ?></div>
-</div><script src="../access/javascript/admin-confirm.js"></script></body></html>
+<form method="post" class="bg-white p-4 rounded-xl shadow border border-emerald-100 grid gap-2">
+  <input name="client_name" class="border p-2 rounded" placeholder="Client Name" required>
+  <input name="designation" class="border p-2 rounded" placeholder="Designation">
+  <textarea name="content" class="border p-2 rounded" placeholder="Review" required></textarea>
+  <input name="rating" type="number" min="1" max="5" class="border p-2 rounded" value="5">
+  <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">
+  <button class="bg-emerald-600 text-white p-2 rounded">Add</button>
+</form>
+<div class="bg-white p-4 rounded-xl shadow border border-emerald-100">
+  <?php foreach($items as $row): ?>
+    <div class="border-b py-2 last:border-b-0">
+      <strong><?= htmlspecialchars($row['client_name']) ?></strong> (<?= (int)$row['rating'] ?>/5): <?= htmlspecialchars($row['content']) ?>
+      <button type="button" class="text-red-600 text-sm ml-2" data-confirm-action data-confirm-title="Delete testimonial" data-confirm-message="এই রিভিউটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No" data-confirm-form-id="delete-testimonial-<?= (int)$row['id'] ?>">Delete</button>
+      <form id="delete-testimonial-<?= (int)$row['id'] ?>" method="post" class="hidden"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>"></form>
+    </div>
+  <?php endforeach; ?>
+</div>
+<?php adminLayoutEnd(); ?>

@@ -48,19 +48,11 @@ function detectPortfolioImageExtension(string $tmpPath, string $originalName, ar
 
     $ext = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
     $allowedExtensions = array_values(array_unique($allowedMime));
-    if ($ext !== '' && in_array($ext, $allowedExtensions, true)) {
-        return $ext;
-    }
-
-    return null;
+    return ($ext !== '' && in_array($ext, $allowedExtensions, true)) ? $ext : null;
 }
 
 $error = '';
-$old = [
-    'title' => '',
-    'category' => 'Social',
-    'image_path' => '',
-];
+$old = ['title' => '', 'category' => 'Social', 'image_path' => ''];
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? null)) {
     if (isset($_POST['delete_id']) && db()) {
@@ -72,28 +64,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
     $title = trim((string)($_POST['title'] ?? ''));
     $category = trim((string)($_POST['category'] ?? 'Social'));
     $image = trim((string)($_POST['image_path'] ?? ''));
+    $old = ['title' => $title, 'category' => $category, 'image_path' => $image];
 
-    $old['title'] = $title;
-    $old['category'] = $category;
-    $old['image_path'] = $image;
-
-    $allowedMime = [
-        'image/jpeg' => 'jpg',
-        'image/pjpeg' => 'jpg',
-        'image/png' => 'png',
-        'image/x-png' => 'png',
-        'image/webp' => 'webp',
-    ];
+    $allowedMime = ['image/jpeg' => 'jpg', 'image/pjpeg' => 'jpg', 'image/png' => 'png', 'image/x-png' => 'png', 'image/webp' => 'webp'];
 
     if (isset($_FILES['image_file']) && (int)($_FILES['image_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
         $fileError = (int)($_FILES['image_file']['error'] ?? UPLOAD_ERR_OK);
-
         if ($fileError !== UPLOAD_ERR_OK) {
             $error = portfolioUploadErrorMessage($fileError);
         } else {
             $tmpPath = (string)($_FILES['image_file']['tmp_name'] ?? '');
             $originalName = (string)($_FILES['image_file']['name'] ?? '');
-
             if ($tmpPath === '' || !is_uploaded_file($tmpPath)) {
                 $error = 'Invalid uploaded image payload.';
             } else {
@@ -109,7 +90,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
                     } else {
                         $fileName = 'portfolio-' . time() . '-' . random_int(100, 999) . '.' . $ext;
                         $targetPath = $targetDir . '/' . $fileName;
-
                         if (!move_uploaded_file($tmpPath, $targetPath)) {
                             $error = 'Failed to move uploaded image. Check folder permission.';
                         } else {
@@ -121,47 +101,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
         }
     }
 
-    if ($image === '') {
-        $image = 'access/img/portfolio-placeholder.svg';
-    }
-
-    if ($title === '') {
-        $error = 'Title is required.';
-    }
+    if ($image === '') $image = 'access/img/portfolio-placeholder.svg';
+    if ($title === '') $error = 'Title is required.';
 
     if ($error === '' && db()) {
-        db()->prepare('INSERT INTO portfolio_items (title, category, image_path) VALUES (:t,:c,:i)')->execute([
-            ':t' => $title,
-            ':c' => $category,
-            ':i' => $image,
-        ]);
-
+        db()->prepare('INSERT INTO portfolio_items (title, category, image_path) VALUES (:t,:c,:i)')->execute([':t' => $title, ':c' => $category, ':i' => $image]);
         header('Location: portfolio.php?saved=1');
         exit;
     }
 }
 
 $items = fetchAllRows('SELECT * FROM portfolio_items ORDER BY id DESC');
+
+require_once __DIR__ . '/layout.php';
+adminLayoutStart('Portfolio', 'portfolio');
 ?>
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="https://cdn.tailwindcss.com"></script></head><body class="p-6 bg-slate-100"><div class="max-w-5xl mx-auto space-y-4">
-<a href="dashboard.php" class="text-green-700">← Dashboard</a><h1 class="text-2xl font-bold">Portfolio</h1>
 <?php if (isset($_GET['saved'])): ?><p class="text-green-700 bg-green-50 p-2 rounded">Portfolio item saved successfully.</p><?php endif; ?>
 <?php if ($error !== ''): ?><p class="text-red-700 bg-red-50 p-2 rounded"><?= htmlspecialchars($error) ?></p><?php endif; ?>
-<form method="post" enctype="multipart/form-data" class="bg-white p-4 rounded shadow grid gap-2 md:grid-cols-2">
-  <input name="title" class="border p-2" placeholder="Title" required value="<?= htmlspecialchars($old['title']) ?>">
-  <input name="category" class="border p-2" placeholder="Category" value="<?= htmlspecialchars($old['category']) ?>">
-  <input name="image_path" class="border p-2 md:col-span-2" placeholder="Image path (optional)" value="<?= htmlspecialchars($old['image_path']) ?>">
-  <input type="file" name="image_file" accept="image/*" class="border p-2 md:col-span-2 bg-white">
+
+<form method="post" enctype="multipart/form-data" class="bg-white p-4 rounded-xl shadow border border-emerald-100 grid gap-2 md:grid-cols-2">
+  <input name="title" class="border p-2 rounded" placeholder="Title" required value="<?= htmlspecialchars($old['title']) ?>">
+  <input name="category" class="border p-2 rounded" placeholder="Category" value="<?= htmlspecialchars($old['category']) ?>">
+  <input name="image_path" class="border p-2 rounded md:col-span-2" placeholder="Image path (optional)" value="<?= htmlspecialchars($old['image_path']) ?>">
+  <input type="file" name="image_file" accept="image/*" class="border p-2 rounded md:col-span-2 bg-white">
   <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">
-  <button class="bg-green-600 text-white p-2 rounded md:col-span-2">Add Portfolio</button>
+  <button class="bg-emerald-600 text-white p-2 rounded md:col-span-2">Add Portfolio</button>
 </form>
-<div class="bg-white p-4 rounded shadow space-y-2">
+
+<div class="bg-white p-4 rounded-xl shadow border border-emerald-100 space-y-2">
   <?php foreach($items as $row): ?>
-    <div class="border-b pb-2">
+    <div class="border-b pb-2 last:border-b-0">
       <strong><?= htmlspecialchars($row['title']) ?></strong> (<?= htmlspecialchars($row['category']) ?>)
       <div class="text-xs text-gray-500 break-all"><?= htmlspecialchars($row['image_path']) ?></div>
-      <button type="button" class="text-red-600 text-sm" data-confirm-action data-confirm-title="Delete portfolio item" data-confirm-message="এই পোর্টফোলিও আইটেমটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No" data-confirm-form-id="delete-portfolio-<?= (int)$row['id'] ?>">Delete</button><form id="delete-portfolio-<?= (int)$row['id'] ?>" method="post" class="hidden"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>"></form>
+      <button type="button" class="text-red-600 text-sm" data-confirm-action data-confirm-title="Delete portfolio item" data-confirm-message="এই পোর্টফোলিও আইটেমটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No" data-confirm-form-id="delete-portfolio-<?= (int)$row['id'] ?>">Delete</button>
+      <form id="delete-portfolio-<?= (int)$row['id'] ?>" method="post" class="hidden"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>"></form>
     </div>
   <?php endforeach; ?>
 </div>
-</div><script src="../access/javascript/admin-confirm.js"></script></body></html>
+<?php adminLayoutEnd(); ?>
