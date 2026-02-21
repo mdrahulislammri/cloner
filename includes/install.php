@@ -191,3 +191,23 @@ function upsertAdmin(PDO $connection, string $name, string $email, string $passw
     $stmt = $connection->prepare('INSERT INTO admins (name, email, password_hash) VALUES (:name, :email, :hash) ON DUPLICATE KEY UPDATE name = VALUES(name), password_hash = VALUES(password_hash)');
     $stmt->execute([':name' => $name, ':email' => $email, ':hash' => $hash]);
 }
+
+
+function removeInstallerEntryPoint(): void
+{
+    $installerPath = dirname(__DIR__) . '/install/index.php';
+    if (!is_file($installerPath)) {
+        return;
+    }
+
+    if (@unlink($installerPath)) {
+        return;
+    }
+
+    $disabledPath = dirname(__DIR__) . '/install/index.php.disabled';
+    if (@rename($installerPath, $disabledPath)) {
+        return;
+    }
+
+    throw new RuntimeException('Unable to remove installer file. Please set write permission on install/index.php and retry.');
+}

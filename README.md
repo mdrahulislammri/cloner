@@ -51,6 +51,7 @@ php -S 127.0.0.1:8000
 - Trade License number + QR display control from Admin Settings
 - Auto-detected admin IP whitelist + manual IP/CIDR add
 - Global install lock: until installation completes, all pages redirect to installer
+- Installer file auto-disable: after successful install, `install/index.php` is removed/renamed for security.
 
 
 ## cPanel SEO/Server File Update (Important)
