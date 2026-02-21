@@ -97,7 +97,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GreenTech | Advanced Installer</title>
+  <title>Portfolio Script | Advanced Installer</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" rel="stylesheet">
   <style>
@@ -270,7 +270,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   </div>
 
   <footer class="mt-12 text-center text-slate-400 text-xs font-medium">
-      &copy; 2026 GreenTech Boost System. All rights reserved.
+      &copy; 2026 Portfolio Script . All rights reserved.
   </footer>
 
   <script>
