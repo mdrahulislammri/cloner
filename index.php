@@ -7,6 +7,8 @@ redirectToInstallerIfNeeded();
 
 require_once __DIR__ . '/includes/content.php';
 
+trackWebsiteVisit();
+
 $settings = getSiteSettings();
 $services = getServices();
 $portfolio = getPortfolio();
@@ -15,17 +17,24 @@ $testimonials = getTestimonials();
 $navLogo = trim((string)($settings['nav_logo'] ?? '')) ?: 'access/img/site-logo.svg';
 $favicon = trim((string)($settings['favicon'] ?? '')) ?: 'access/img/favicon.svg';
 
-if (session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
-}
+$faviconExt = strtolower(pathinfo($favicon, PATHINFO_EXTENSION));
+$faviconMime = match ($faviconExt) {
+    'ico' => 'image/x-icon',
+    'png' => 'image/png',
+    'jpg', 'jpeg' => 'image/jpeg',
+    'webp' => 'image/webp',
+    default => 'image/svg+xml',
+};
 
-$flash = $_SESSION['flash_message'] ?? null;
-unset($_SESSION['flash_message']);
+$flashMessages = flashConsume();
 
 $whatsappNumber = preg_replace('/\D+/', '', (string)($settings['whatsapp_number'] ?? '')) ?: '8801000000000';
 $chatEnabled = (($settings['chat_toggle_enabled'] ?? '1') === '1');
 $channels = [];
 
+
+$tradeLicenseNumber = trim((string)($settings['trade_license_number'] ?? ''));
+$tradeLicenseQr = trim((string)($settings['trade_license_qr'] ?? ''));
 
 $toastEnabled = (($settings['toast_enabled'] ?? '1') === '1');
 $toastPosition = (string)($settings['toast_position'] ?? 'top-right');
@@ -39,15 +48,15 @@ if ($toastDuration < 1000 || $toastDuration > 15000) {
 }
 
 if (($settings['chat_messenger_enabled'] ?? '1') === '1' && trim((string)($settings['messenger_url'] ?? '')) !== '') {
-    $channels[] = ['label' => 'Messenger', 'icon' => '💬', 'url' => (string)$settings['messenger_url']];
+    $channels[] = ['label' => 'Messenger', 'icon' => 'fa-brands fa-facebook-messenger', 'url' => (string)$settings['messenger_url']];
 }
 
 if (($settings['chat_telegram_enabled'] ?? '1') === '1' && trim((string)($settings['telegram_url'] ?? '')) !== '') {
-    $channels[] = ['label' => 'Telegram', 'icon' => '📨', 'url' => (string)$settings['telegram_url']];
+    $channels[] = ['label' => 'Telegram', 'icon' => 'fa-brands fa-telegram', 'url' => (string)$settings['telegram_url']];
 }
 
 if (($settings['chat_whatsapp_enabled'] ?? '1') === '1') {
-    $channels[] = ['label' => 'WhatsApp', 'icon' => '🟢', 'url' => 'https://wa.me/' . $whatsappNumber];
+    $channels[] = ['label' => 'WhatsApp', 'icon' => 'fa-brands fa-whatsapp', 'url' => 'https://wa.me/' . $whatsappNumber];
 }
 
 
@@ -79,9 +88,50 @@ $websiteJsonLd = [
     'inLanguage' => 'bn-BD',
 ];
 
+
+function serviceIconClass(string $raw): string
+{
+    $value = trim($raw);
+    $emojiMap = [
+        '📘' => 'fa-brands fa-facebook-f',
+        '📸' => 'fa-brands fa-instagram',
+        '▶️' => 'fa-brands fa-youtube',
+        '🟢' => 'fa-solid fa-bolt',
+    ];
+
+    if (isset($emojiMap[$value])) {
+        return $emojiMap[$value];
+    }
+
+    $sanitized = preg_replace('/[^a-z0-9\-\s]/i', '', $value) ?? '';
+    $sanitized = trim($sanitized);
+    return $sanitized !== '' ? $sanitized : 'fa-solid fa-bolt';
+}
+
+function chatIconClass(string $raw): string
+{
+    $value = trim($raw);
+    $sanitized = preg_replace('/[^a-z0-9\-\s]/i', '', $value) ?? '';
+    $sanitized = trim($sanitized);
+    return $sanitized !== '' ? $sanitized : 'fa-solid fa-comments';
+}
+
+function chatIconTone(string $label): string
+{
+    $tones = [
+        'messenger' => 'chat-link-icon--messenger',
+        'telegram' => 'chat-link-icon--telegram',
+        'whatsapp' => 'chat-link-icon--whatsapp',
+        'call' => 'chat-link-icon--call',
+    ];
+
+    $key = strtolower(trim($label));
+    return $tones[$key] ?? 'chat-link-icon--default';
+}
+
 $callNumber = trim((string)($settings['call_number'] ?? ($settings['phone'] ?? '')));
 if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
-    $channels[] = ['label' => 'Call', 'icon' => '📞', 'url' => 'tel:' . preg_replace('/[^\d+]/', '', $callNumber)];
+    $channels[] = ['label' => 'Call', 'icon' => 'fa-solid fa-phone-volume', 'url' => 'tel:' . preg_replace('/[^\d+]/', '', $callNumber)];
 }
 ?>
 <!doctype html>
@@ -94,7 +144,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
   <meta name="robots" content="index,follow,max-image-preview:large">
   <meta name="author" content="<?= htmlspecialchars($settings['site_title']) ?>">
   <meta name="theme-color" content="#10b981">
-  <link rel="icon" type="image/svg+xml" href="<?= htmlspecialchars($favicon) ?>">
+  <link rel="icon" type="<?= htmlspecialchars($faviconMime) ?>" href="<?= htmlspecialchars($favicon) ?>">
   <link rel="shortcut icon" href="<?= htmlspecialchars($favicon) ?>">
   <link rel="canonical" href="<?= htmlspecialchars($canonicalUrl) ?>">
 
@@ -114,6 +164,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
   <script type="application/ld+json"><?= json_encode($websiteJsonLd, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?></script>
 
   <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" integrity="sha512-SnH5WK+bZxgPHs44uWix+LLJAJ9/2PkPKZ5QiAj6Ta86w+fsb2TkR4j8R2YV8mWQhWQ9f2MYYbZ6+4Q6w5P6Kw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
   <link rel="stylesheet" href="access/css/styles.css">
 </head>
 <body class="text-slate-800 bg-slate-50">
@@ -136,17 +187,18 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <li><a class="hover:text-emerald-700" href="#portfolio">পোর্টফোলিও</a></li>
         <li><a class="hover:text-emerald-700" href="#reviews">রিভিউ</a></li>
         <li><a class="hover:text-emerald-700" href="#contact">যোগাযোগ</a></li>
-        <li><a href="admin/login.php" class="px-4 py-2 rounded-xl bg-emerald-600 text-white hover:bg-emerald-700">Admin</a></li>
       </ul>
     </nav>
 
-    <div id="mobile-menu" data-mobile-menu class="mobile-menu hidden md:hidden border-t border-emerald-100 bg-white px-4 py-3 space-y-2 text-sm">
-      <a class="block" href="#about">আমার সম্পর্কে</a>
-      <a class="block" href="#services">সার্ভিস</a>
-      <a class="block" href="#portfolio">পোর্টফোলিও</a>
-      <a class="block" href="#reviews">রিভিউ</a>
-      <a class="block" href="#contact">যোগাযোগ</a>
-      <a class="inline-block mt-2 px-3 py-2 rounded-lg bg-emerald-600 text-white" href="admin/login.php">Admin</a>
+    <div data-mobile-backdrop class="mobile-menu-backdrop hidden md:hidden"></div>
+    <div id="mobile-menu" data-mobile-menu class="mobile-menu hidden md:hidden fixed inset-x-0 top-[4.8rem] z-50 px-4 text-sm">
+      <div class="mobile-menu-panel mobile-menu-popup">
+        <a class="mobile-menu-link" href="#about">আমার সম্পর্কে</a>
+        <a class="mobile-menu-link" href="#services">সার্ভিস</a>
+        <a class="mobile-menu-link" href="#portfolio">পোর্টফোলিও</a>
+        <a class="mobile-menu-link" href="#reviews">রিভিউ</a>
+        <a class="mobile-menu-link" href="#contact">যোগাযোগ</a>
+      </div>
     </div>
   </header>
 
@@ -165,7 +217,7 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
       <div class="relative">
         <div class="absolute -top-10 -right-4 w-40 h-40 rounded-full bg-emerald-200/60 blur-3xl"></div>
         <div class="hero-visual glass-card p-4">
-          <img src="<?= htmlspecialchars($settings['hero_image']) ?>" alt="<?= htmlspecialchars($settings['site_title']) ?> hero showcase" class="w-full h-[420px] object-cover rounded-[2rem] border border-emerald-100" fetchpriority="high" decoding="async">
+          <img src="<?= htmlspecialchars($settings['hero_image']) ?>" alt="<?= htmlspecialchars($settings['site_title']) ?> hero showcase" class="hero-main-image rounded-[2rem] border border-emerald-100" fetchpriority="high" decoding="async">
         </div>
       </div>
     </div>
@@ -190,12 +242,19 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
     <section id="services" class="section-wrap section-alt">
       <div class="max-w-7xl mx-auto px-4">
         <h2 class="section-title text-center text-3xl lg:text-4xl">আমাদের সার্ভিসসমূহ</h2>
-        <div class="mt-9 grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="mt-9 grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <?php foreach ($services as $service): ?>
-            <article class="glass-card p-6 hover:-translate-y-1 transition duration-300">
-              <div class="service-icon"><?= htmlspecialchars($service['icon']) ?></div>
-              <h3 class="mt-4 font-bold text-xl text-emerald-800"><?= htmlspecialchars($service['title']) ?></h3>
-              <p class="mt-2 text-slate-600"><?= htmlspecialchars($service['description']) ?></p>
+            <article class="service-card group">
+              <div class="service-card-top">
+                <div class="service-icon"><i class="<?= htmlspecialchars(serviceIconClass((string)$service['icon'])) ?>" aria-hidden="true"></i></div>
+                <span class="service-badge">Premium Service</span>
+              </div>
+              <h3 class="mt-5 font-extrabold text-xl text-slate-900 leading-snug"><?= htmlspecialchars($service['title']) ?></h3>
+              <p class="mt-3 text-slate-600 leading-relaxed"><?= htmlspecialchars($service['description']) ?></p>
+              <div class="service-card-footer">
+                <span>Learn more</span>
+                <span aria-hidden="true">→</span>
+              </div>
             </article>
           <?php endforeach; ?>
         </div>
@@ -239,13 +298,35 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
         <h2 class="section-title text-center text-3xl lg:text-4xl"><?= htmlspecialchars($settings['contact_title']) ?></h2>
         <p class="text-center text-slate-600 mt-2"><?= htmlspecialchars($settings['contact_subtitle']) ?></p>
 
-        <?php if ($toastEnabled && is_array($flash) && isset($flash['type'], $flash['message'])): ?>
+        <?php if ($toastEnabled && $flashMessages !== []): ?>
           <div class="toast-stack toast-<?= htmlspecialchars($toastPosition) ?>" data-toast-stack data-toast-duration="<?= (int)$toastDuration ?>">
-            <div class="toast-item <?= $flash['type'] === 'success' ? 'toast-success' : 'toast-error' ?>" data-toast role="status" aria-live="polite">
-              <span class="toast-dot" aria-hidden="true"></span>
-              <span><?= htmlspecialchars((string)$flash['message']) ?></span>
-              <button type="button" class="toast-close" data-toast-close aria-label="Close notification">×</button>
-            </div>
+            <?php foreach ($flashMessages as $flash): ?>
+              <?php
+              $toastType = $flash['type'];
+              $toastClass = match ($toastType) {
+                  'success' => 'toast-success',
+                  'warning' => 'toast-warning',
+                  'error' => 'toast-error',
+                  default => 'toast-info',
+              };
+              $toastIcon = match ($toastType) {
+                  'success' => '✅',
+                  'warning' => '⚠️',
+                  'error' => '⛔',
+                  default => 'ℹ️',
+              };
+              ?>
+              <div class="toast-item <?= $toastClass ?>" data-toast role="status" aria-live="polite">
+                <span class="toast-dot" aria-hidden="true"></span>
+                <div class="toast-content">
+                  <p class="toast-title"><?= htmlspecialchars($flash['title'] !== '' ? $flash['title'] : 'Notification') ?></p>
+                  <p><?= htmlspecialchars($flash['message']) ?></p>
+                </div>
+                <span class="toast-icon" aria-hidden="true"><?= htmlspecialchars($toastIcon) ?></span>
+                <button type="button" class="toast-close" data-toast-close aria-label="Close notification">×</button>
+                <span class="toast-progress" data-toast-progress></span>
+              </div>
+            <?php endforeach; ?>
           </div>
         <?php endif; ?>
 
@@ -272,36 +353,73 @@ if (($settings['chat_call_enabled'] ?? '1') === '1' && $callNumber !== '') {
               <p class="font-extrabold text-lg"><?= htmlspecialchars($settings['whatsapp_notice_title']) ?></p>
               <p class="mt-1 text-slate-600"><?= htmlspecialchars($settings['whatsapp_notice_text']) ?></p>
             </div>
+
+            <?php if ($tradeLicenseNumber !== '' || $tradeLicenseQr !== ''): ?>
+              <div class="mt-4 p-4 rounded-2xl bg-white border border-emerald-100">
+                <h4 class="font-bold text-emerald-800">Trade License</h4>
+                <p class="text-sm text-slate-700 mt-2">License No: <span class="font-semibold"><?= htmlspecialchars($tradeLicenseNumber !== '' ? $tradeLicenseNumber : 'Not provided yet') ?></span></p>
+                <div class="mt-3">
+                  <?php if ($tradeLicenseQr !== ''): ?>
+                    <img src="<?= htmlspecialchars($tradeLicenseQr) ?>" alt="Trade license QR code" class="w-28 h-28 rounded border border-emerald-100 object-cover" loading="lazy" decoding="async">
+                  <?php else: ?>
+                    <div class="w-28 h-28 rounded border border-dashed border-slate-300 text-xs text-slate-500 grid place-items-center">QR not uploaded</div>
+                  <?php endif; ?>
+                </div>
+              </div>
+            <?php endif; ?>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer class="bg-emerald-900 text-emerald-50 mt-8">
-    <div class="max-w-7xl mx-auto px-4 py-10 grid md:grid-cols-3 gap-7">
-      <div><h3 class="font-bold text-xl"><?= htmlspecialchars($settings['site_title']) ?></h3><p class="mt-2 text-emerald-100/90"><?= htmlspecialchars($settings['footer_text']) ?></p></div>
-      <div><a class="underline" href="admin/login.php">Secure Admin Panel</a></div>
-      <div class="text-sm">© <?= date('Y') ?> All rights reserved.</div>
+  <footer class="mt-10 border-t border-emerald-800/70 bg-gradient-to-br from-emerald-950 via-emerald-900 to-emerald-800 text-emerald-50">
+    <div class="max-w-7xl mx-auto px-4 py-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div>
+        <h3 class="text-2xl font-extrabold tracking-tight"><?= htmlspecialchars($settings['site_title']) ?></h3>
+        <p class="mt-3 text-emerald-100/90 leading-relaxed max-w-md"><?= htmlspecialchars($settings['footer_text']) ?></p>
+      </div>
+
+      <div>
+        <p class="text-sm uppercase tracking-[0.2em] text-emerald-200/90">Quick Contact</p>
+        <ul class="mt-4 space-y-2 text-emerald-100/95">
+          <li><span class="text-emerald-300">📞</span> <?= htmlspecialchars($settings['phone']) ?></li>
+          <li><span class="text-emerald-300">✉️</span> <?= htmlspecialchars($settings['email']) ?></li>
+          <li><span class="text-emerald-300">📍</span> <?= htmlspecialchars($settings['address']) ?></li>
+        </ul>
+      </div>
+
+      <div class="lg:text-right">
+        <p class="text-sm uppercase tracking-[0.2em] text-emerald-200/90">Info</p>
+        <p class="mt-4 text-sm text-emerald-100/90">Trusted digital services for your business growth.</p>
+        <p class="mt-5 text-sm text-emerald-100/80">© <?= date('Y') ?> All rights reserved.</p>
+      </div>
     </div>
   </footer>
 
   <?php if ($chatEnabled && $channels !== []): ?>
     <div class="chat-float" data-chat-widget>
       <div class="chat-menu hidden" data-chat-menu>
-        <p class="chat-menu-title"><?= htmlspecialchars($settings['chat_widget_title']) ?></p>
-        <p class="chat-menu-subtitle"><?= htmlspecialchars($settings['chat_widget_subtitle']) ?></p>
+        <div class="chat-menu-head">
+          <span class="chat-head-icon" aria-hidden="true"><i class="fa-solid fa-headset"></i></span>
+          <div>
+            <p class="chat-menu-title"><?= htmlspecialchars($settings['chat_widget_title']) ?></p>
+            <p class="chat-menu-subtitle"><?= htmlspecialchars($settings['chat_widget_subtitle']) ?></p>
+          </div>
+        </div>
         <div class="chat-links">
           <?php foreach ($channels as $channel): ?>
             <a href="<?= htmlspecialchars($channel['url']) ?>" class="chat-link" target="_blank" rel="noopener">
-              <span class="chat-link-icon"><?= htmlspecialchars($channel['icon']) ?></span>
-              <span><?= htmlspecialchars($channel['label']) ?></span>
+              <span class="chat-link-icon <?= htmlspecialchars(chatIconTone((string)$channel['label'])) ?>" aria-hidden="true"><i class="<?= htmlspecialchars(chatIconClass((string)$channel['icon'])) ?>"></i></span>
+              <span class="chat-link-text"><?= htmlspecialchars($channel['label']) ?></span>
+              <span class="chat-link-arrow" aria-hidden="true"><i class="fa-solid fa-angle-right"></i></span>
             </a>
           <?php endforeach; ?>
         </div>
       </div>
       <button type="button" class="wa-float" data-chat-toggle aria-expanded="false" aria-label="Open contact options">
-        <span class="wa-pulse"></span><span class="wa-icon" data-chat-icon>💬</span>
+        <span class="wa-pulse"></span>
+        <span class="wa-icon" data-chat-icon><i class="fa-solid fa-comments"></i></span>
       </button>
     </div>
   <?php endif; ?>
