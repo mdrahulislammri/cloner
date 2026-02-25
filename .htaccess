@@ -1,26 +1,51 @@
 # --------------------------------------------
-# GreenTech Boost - Apache / cPanel defaults
+# GreenTech Boost - Apache baseline
 # --------------------------------------------
+
+DirectoryIndex index.php
+Options -Indexes
+ServerSignature Off
 
 # Custom error pages
 ErrorDocument 403 /403.php
 ErrorDocument 404 /404.php
 ErrorDocument 500 /500.php
 
-# Prevent directory listing
-Options -Indexes
-
-# Protect sensitive files
-<FilesMatch "^(\.env|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock)$">
+# Block direct access to sensitive files
+<FilesMatch "^(\.env|composer\.(json|lock)|package(-lock)?\.json|yarn\.lock|\.gitignore|\.htaccess)$">
   Require all denied
 </FilesMatch>
 
-# Basic security headers
+# Disable access to private directories
+RedirectMatch 403 ^/(?:database|includes)/
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+
+  # Force HTTPS on real domains (skip localhost/dev IP)
+  RewriteCond %{HTTPS} !=on
+  RewriteCond %{HTTP_HOST} !^(localhost|127\.0\.0\.1)(:[0-9]+)?$ [NC]
+  RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+</IfModule>
+
+# Security headers
 <IfModule mod_headers.c>
   Header always set X-Content-Type-Options "nosniff"
   Header always set X-Frame-Options "SAMEORIGIN"
   Header always set Referrer-Policy "strict-origin-when-cross-origin"
+  Header always set Permissions-Policy "geolocation=(), camera=(), microphone=()"
+
+  # Enable HSTS only on HTTPS requests
+  Header always set Strict-Transport-Security "max-age=31536000; includeSubDomains" env=HTTPS
 </IfModule>
 
-# Pretty fallback for root homepage
-DirectoryIndex index.php
+# Basic static file caching
+<IfModule mod_expires.c>
+  ExpiresActive On
+  ExpiresByType text/css "access plus 7 days"
+  ExpiresByType application/javascript "access plus 7 days"
+  ExpiresByType image/svg+xml "access plus 30 days"
+  ExpiresByType image/png "access plus 30 days"
+  ExpiresByType image/jpeg "access plus 30 days"
+  ExpiresByType image/webp "access plus 30 days"
+</IfModule>

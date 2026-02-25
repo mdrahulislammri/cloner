@@ -41,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = 'Invalid security token.';
     } elseif (!installRequirementsPassed()) {
         $error = 'Server requirement check failed. Please fix red items and retry.';
-    } elseif ($form['admin_password'] === '' || strlen($form['admin_password']) < 8) {
-        $error = 'Admin password must be at least 8 characters.';
+    } elseif (!isStrongAdminPassword($form['admin_password'])) {
+        $error = 'Admin password must be at least 8 characters and include uppercase, lowercase, and number.';
     } elseif (!filter_var($form['admin_email'], FILTER_VALIDATE_EMAIL)) {
         $error = 'Please provide a valid admin email.';
     } else {
@@ -70,14 +70,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $whitelist = implode(',', array_values(array_unique($ips)));
                 upsertSettingWithConnection($connection, 'site_title', $form['site_title']);
                 upsertSettingWithConnection($connection, 'admin_ip_whitelist', $whitelist);
-                upsertSettingWithConnection($connection, 'app_installed', '1');
 
-                writeEnvConfig($dbConfig, $form['base_url'] === '' ? '/' : $form['base_url'], $whitelist);
+                writeConfigPhp($dbConfig, $form['base_url'] === '' ? '/' : $form['base_url']);
 
-                $success = 'Installation completed successfully. Redirecting to admin login...';
+                if (!upsertSettingWithConnection($connection, 'app_installed', '1')) {
+                    throw new RuntimeException('Failed to finalize installation state.');
+                }
+
+                try {
+                    removeInstallerEntryPoint();
+                } catch (Throwable $exception) {
+                    upsertSettingWithConnection($connection, 'app_installed', '0');
+                    throw $exception;
+                }
+
+                $success = 'Installation completed and installer disabled. Redirecting to admin login...';
                 header('Refresh: 2; url=../admin/login.php?installed=1');
             } catch (Throwable $exception) {
-                $error = 'Install failed. Please check DB credentials, file permissions, and schema compatibility.';
+                $error = 'Install failed. Check DB credentials, includes/config.php permissions, and make sure install/index.php is writable so installer can be removed.';
             }
         }
     }
@@ -142,6 +152,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </label>
         <label class="text-sm md:col-span-2">Admin Password (min 8)
           <input type="password" name="admin_password" class="w-full border rounded p-2" required>
+          <span class="text-xs text-slate-500">Minimum 8 chars with uppercase, lowercase and number.</span>
         </label>
       </div>
 
