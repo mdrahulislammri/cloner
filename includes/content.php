@@ -43,6 +43,8 @@ function getSiteSettings(): array
         'toast_position' => 'top-right',
         'toast_duration_ms' => '4000',
         'footer_text' => 'Premium, user-friendly, SEO-ready social media growth platform.',
+        'trade_license_number' => '',
+        'trade_license_qr' => '',
         'app_installed' => '0',
         'admin_ip_whitelist' => '127.0.0.1,::1',
     ];
@@ -63,9 +65,9 @@ function getServices(): array
     }
 
     return [
-        ['id' => 0, 'title' => 'ফেসবুক মার্কেটিং', 'description' => 'ব্র্যান্ড ভিজিবিলিটি বাড়াতে ডাটা-ড্রিভেন কৌশল।', 'icon' => '📘'],
-        ['id' => 0, 'title' => 'ইনস্টাগ্রাম গ্রোথ', 'description' => 'অর্গানিক রিচ ও কনভার্সন ফোকাসড ক্যাম্পেইন।', 'icon' => '📸'],
-        ['id' => 0, 'title' => 'ইউটিউব প্রোমোশন', 'description' => 'চ্যানেল গ্রোথ, ওয়াচটাইম ও সাবস্ক্রাইবার বুস্ট।', 'icon' => '▶️'],
+        ['id' => 0, 'title' => 'ফেসবুক মার্কেটিং', 'description' => 'ব্র্যান্ড ভিজিবিলিটি বাড়াতে ডাটা-ড্রিভেন কৌশল।', 'icon' => 'fa-brands fa-facebook-f'],
+        ['id' => 0, 'title' => 'ইনস্টাগ্রাম গ্রোথ', 'description' => 'অর্গানিক রিচ ও কনভার্সন ফোকাসড ক্যাম্পেইন।', 'icon' => 'fa-brands fa-instagram'],
+        ['id' => 0, 'title' => 'ইউটিউব প্রোমোশন', 'description' => 'চ্যানেল গ্রোথ, ওয়াচটাইম ও সাবস্ক্রাইবার বুস্ট।', 'icon' => 'fa-brands fa-youtube'],
     ];
 }
 

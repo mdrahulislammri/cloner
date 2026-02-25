@@ -9,16 +9,16 @@ require_once __DIR__ . '/../includes/auth.php';
 require_once __DIR__ . '/../includes/db.php';
 requireAdmin();
 
-if (isset($_GET['delete']) && db()) {
-    db()->prepare('DELETE FROM services WHERE id = :id')->execute([':id' => (int)$_GET['delete']]);
-    header('Location: services.php');
-    exit;
-}
-
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? null)) {
+    if (isset($_POST['delete_id']) && db()) {
+        db()->prepare('DELETE FROM services WHERE id = :id')->execute([':id' => (int)$_POST['delete_id']]);
+        header('Location: services.php');
+        exit;
+    }
+
     $title = trim((string)($_POST['title'] ?? ''));
     $description = trim((string)($_POST['description'] ?? ''));
-    $icon = trim((string)($_POST['icon'] ?? '🟢'));
+    $icon = trim((string)($_POST['icon'] ?? 'fa-solid fa-bolt'));
     if ($title !== '' && $description !== '' && db()) {
         db()->prepare('INSERT INTO services (title, description, icon) VALUES (:t,:d,:i)')->execute([':t' => $title, ':d' => $description, ':i' => $icon]);
     }
@@ -26,9 +26,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && verifyCsrfToken($_POST['csrf'] ?? n
     exit;
 }
 $services = fetchAllRows('SELECT * FROM services ORDER BY id DESC');
+
+require_once __DIR__ . '/layout.php';
+adminLayoutStart('Services', 'services');
 ?>
-<!doctype html><html><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><script src="https://cdn.tailwindcss.com"></script></head><body class="p-6 bg-slate-100"><div class="max-w-4xl mx-auto space-y-4">
-<a href="dashboard.php" class="text-green-700">← Dashboard</a><h1 class="text-2xl font-bold">Services</h1>
-<form method="post" class="bg-white p-4 rounded shadow grid gap-2"><input name="title" class="border p-2" placeholder="Title" required><textarea name="description" class="border p-2" placeholder="Description" required></textarea><input name="icon" class="border p-2" placeholder="Icon (emoji)"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><button class="bg-green-600 text-white p-2 rounded">Add</button></form>
-<div class="bg-white p-4 rounded shadow"><?php foreach($services as $row): ?><div class="border-b py-2"><?= htmlspecialchars($row['icon']) ?> <strong><?= htmlspecialchars($row['title']) ?></strong> - <?= htmlspecialchars($row['description']) ?> <a class="text-red-600 text-sm" href="services.php?delete=<?= (int)$row['id'] ?>" onclick="return confirm('Delete service?')">Delete</a></div><?php endforeach; ?></div>
-</div></body></html>
+<form method="post" class="bg-white p-4 rounded-xl shadow border border-emerald-100 grid gap-2">
+  <input name="title" class="border p-2 rounded" placeholder="Title" required>
+  <textarea name="description" class="border p-2 rounded" placeholder="Description" required></textarea>
+  <input name="icon" class="border p-2 rounded" placeholder="Icon class (e.g. fa-solid fa-bolt)">
+  <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">
+  <button class="bg-emerald-600 text-white p-2 rounded">Add</button>
+</form>
+<div class="bg-white p-4 rounded-xl shadow border border-emerald-100 space-y-2">
+  <?php foreach($services as $row): ?>
+    <div class="border-b py-2 last:border-b-0">
+      <i class="<?= htmlspecialchars((string)$row['icon']) ?>" aria-hidden="true"></i> <strong><?= htmlspecialchars($row['title']) ?></strong> - <?= htmlspecialchars($row['description']) ?>
+      <button type="button" class="text-red-600 text-sm ml-2" data-confirm-action data-confirm-title="Delete service" data-confirm-message="এই সার্ভিসটি মুছে ফেলতে চান?" data-confirm-yes="Yes, Delete" data-confirm-no="No" data-confirm-form-id="delete-service-<?= (int)$row['id'] ?>">Delete</button>
+      <form id="delete-service-<?= (int)$row['id'] ?>" method="post" class="hidden"><input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>"><input type="hidden" name="delete_id" value="<?= (int)$row['id'] ?>"></form>
+    </div>
+  <?php endforeach; ?>
+</div>
+<?php adminLayoutEnd(); ?>
