@@ -1,5 +1,10 @@
 <?php
 declare(strict_types=1);
+
+require_once __DIR__ . '/includes/config.php';
+
+$basePath = rtrim((string)appEnv('BASE_URL', BASE_URL), '/');
+$homeUrl = ($basePath === '' ? '' : $basePath) . '/index.php';
 http_response_code(500);
 ?>
 <!doctype html>
@@ -18,8 +23,8 @@ http_response_code(500);
       <h1 class="mt-2 text-3xl md:text-4xl font-black text-slate-900">Internal Server Error</h1>
       <p class="mt-4 text-slate-600">Something went wrong on our side. Please try again in a few minutes.</p>
       <div class="mt-7 flex justify-center gap-3">
-        <a href="index.php" class="btn-primary">Return Home</a>
-        <a href="index.php#contact" class="btn-outline">Report Issue</a>
+        <a href="<?= htmlspecialchars($homeUrl) ?>" class="btn-primary">Return Home</a>
+        <a href="<?= htmlspecialchars($homeUrl . "#contact") ?>" class="btn-outline">Report Issue</a>
       </div>
     </section>
   </main>

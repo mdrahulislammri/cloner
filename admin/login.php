@@ -10,7 +10,6 @@ require_once __DIR__ . '/../includes/auth.php';
 startSecureSession();
 enforceAdminIpWhitelist();
 $currentIp = getClientIpAddress();
-$whitelist = getAdminIpWhitelist();
 $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!verifyCsrfToken($_POST['csrf'] ?? null)) {
@@ -18,11 +17,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         $email = trim((string)($_POST['email'] ?? ''));
         $password = (string)($_POST['password'] ?? '');
-        if (attemptAdminLogin($email, $password)) {
+        $loginError = null;
+        if (attemptAdminLogin($email, $password, $loginError)) {
             header('Location: dashboard.php');
             exit;
         }
-        $error = 'ইমেইল বা পাসওয়ার্ড ভুল';
+        $error = $loginError ?? 'ইমেইল বা পাসওয়ার্ড ভুল';
     }
 }
 ?>
@@ -32,8 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <h1 class="text-2xl font-bold text-green-700">Admin Login</h1>
 <?php if ($error): ?><p class="text-red-600 text-sm"><?= htmlspecialchars($error) ?></p><?php endif; ?>
 <?php if (isset($_GET['installed'])): ?><p class="text-green-700 text-sm bg-green-50 p-2 rounded">Installer complete. You can login now.</p><?php endif; ?>
-<p class="text-xs text-slate-500">Your IP: <strong><?= htmlspecialchars($currentIp) ?></strong></p>
-<p class="text-xs text-slate-500">Allowed IPs: <?= htmlspecialchars(implode(', ', $whitelist)) ?></p>
+<p class="text-xs text-slate-500">Request IP: <strong><?= htmlspecialchars($currentIp) ?></strong></p>
 <input name="email" type="email" placeholder="Email" class="w-full border p-2 rounded" required>
 <input name="password" type="password" placeholder="Password" class="w-full border p-2 rounded" required>
 <input type="hidden" name="csrf" value="<?= htmlspecialchars(csrfToken()) ?>">

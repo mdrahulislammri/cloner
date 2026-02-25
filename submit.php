@@ -5,21 +5,7 @@ declare(strict_types=1);
 require_once __DIR__ . '/includes/bootstrap.php';
 redirectToInstallerIfNeeded();
 
-require_once __DIR__ . '/includes/config.php';
 require_once __DIR__ . '/includes/db.php';
-
-function startSessionIfNeeded(): void
-{
-    if (session_status() !== PHP_SESSION_ACTIVE) {
-        session_start();
-    }
-}
-
-function setFlash(string $type, string $message): void
-{
-    startSessionIfNeeded();
-    $_SESSION['flash_message'] = ['type' => $type, 'message' => $message];
-}
 
 function redirectToContact(): never
 {
@@ -27,15 +13,15 @@ function redirectToContact(): never
     exit;
 }
 
-startSessionIfNeeded();
+flashStartSession();
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    setFlash('error', 'Invalid request method.');
+    flashPush('error', 'Invalid request method.', 'Request failed');
     redirectToContact();
 }
 
 if (!verifyCsrfToken($_POST['csrf'] ?? null)) {
-    setFlash('error', 'Security validation failed. Please try again.');
+    flashPush('error', 'Security validation failed. Please try again.', 'Security check');
     redirectToContact();
 }
 
@@ -45,7 +31,7 @@ $lastRequestAt = (int)($_SESSION[$rateLimitKey] ?? 0);
 $now = time();
 
 if ($lastRequestAt > 0 && ($now - $lastRequestAt) < 20) {
-    setFlash('error', 'Please wait a few seconds before sending another message.');
+    flashPush('warning', 'Please wait a few seconds before sending another message.', 'Too many attempts');
     redirectToContact();
 }
 
@@ -54,18 +40,18 @@ $email = trim((string)($_POST['email'] ?? ''));
 $message = trim((string)($_POST['message'] ?? ''));
 
 if ($name === '' || $message === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    setFlash('error', 'Validation failed. Please enter valid name, email and message.');
+    flashPush('error', 'Validation failed. Please enter valid name, email and message.', 'Invalid input');
     redirectToContact();
 }
 
 if (mb_strlen($name) > 120 || mb_strlen($email) > 120 || mb_strlen($message) > 3000) {
-    setFlash('error', 'Input is too long. Please keep your message shorter.');
+    flashPush('warning', 'Input is too long. Please keep your message shorter.', 'Input limit');
     redirectToContact();
 }
 
 $connection = db();
 if (!$connection) {
-    setFlash('error', 'Service is temporarily unavailable. Please try again later.');
+    flashPush('error', 'Service is temporarily unavailable. Please try again later.', 'Server busy');
     redirectToContact();
 }
 
@@ -78,9 +64,9 @@ try {
     ]);
 
     $_SESSION[$rateLimitKey] = $now;
-    setFlash('success', 'আপনার মেসেজ সফলভাবে পাঠানো হয়েছে। আমরা দ্রুত যোগাযোগ করবো।');
+    flashPush('success', 'আপনার মেসেজ সফলভাবে পাঠানো হয়েছে। আমরা দ্রুত যোগাযোগ করবো।', 'Message sent');
 } catch (Throwable $exception) {
-    setFlash('error', 'Unable to submit message right now. Please try again later.');
+    flashPush('error', 'Unable to submit message right now. Please try again later.', 'Submit failed');
 }
 
 redirectToContact();
