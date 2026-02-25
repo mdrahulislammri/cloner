@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Keep setup/admin areas out of index
+Disallow: /admin/
+Disallow: /install/
+Disallow: /includes/
+Disallow: /database/
+
+# Replace with your real domain before production
+Sitemap: https://example.com/sitemap.xml

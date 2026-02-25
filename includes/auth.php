@@ -1,0 +1,310 @@
+<?php
+
+declare(strict_types=1);
+
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/config.php';
+require_once __DIR__ . '/install.php';
+
+function startSecureSession(): void
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return;
+    }
+
+    session_set_cookie_params([
+        'lifetime' => 0,
+        'path' => '/',
+        'secure' => isset($_SERVER['HTTPS']),
+        'httponly' => true,
+        'samesite' => 'Lax',
+    ]);
+    session_start();
+}
+
+
+
+function getClientIpAddress(): string
+{
+    $remoteAddr = trim((string)($_SERVER['REMOTE_ADDR'] ?? ''));
+    if ($remoteAddr === '' || !filter_var($remoteAddr, FILTER_VALIDATE_IP)) {
+        return '0.0.0.0';
+    }
+
+    if (!isTrustedProxyIp($remoteAddr)) {
+        return $remoteAddr;
+    }
+
+    $forwardedCandidates = [
+        (string)($_SERVER['HTTP_CF_CONNECTING_IP'] ?? ''),
+        (string)($_SERVER['HTTP_X_FORWARDED_FOR'] ?? ''),
+        (string)($_SERVER['HTTP_X_REAL_IP'] ?? ''),
+    ];
+
+    foreach ($forwardedCandidates as $candidate) {
+        if ($candidate === '') {
+            continue;
+        }
+
+        foreach (explode(',', $candidate) as $part) {
+            $ip = trim($part);
+            if ($ip !== '' && filter_var($ip, FILTER_VALIDATE_IP)) {
+                return $ip;
+            }
+        }
+    }
+
+    return $remoteAddr;
+}
+
+function isTrustedProxyIp(string $ip): bool
+{
+    $raw = trim((string)appEnv('TRUSTED_PROXIES', ''));
+    if ($raw === '') {
+        return false;
+    }
+
+    $trustedProxies = normalizeIpList($raw);
+    foreach ($trustedProxies as $trustedProxy) {
+        if (strpos($trustedProxy, '/') !== false && ipMatchesCidr($ip, $trustedProxy)) {
+            return true;
+        }
+
+        if ($trustedProxy === $ip) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function adminLoginThrottleStoragePath(): string
+{
+    return rtrim(sys_get_temp_dir(), '/\\') . '/greentech_admin_login_throttle.json';
+}
+
+function readAdminLoginThrottleState(): array
+{
+    $path = adminLoginThrottleStoragePath();
+    if (!is_file($path)) {
+        return [];
+    }
+
+    $raw = file_get_contents($path);
+    if (!is_string($raw) || trim($raw) === '') {
+        return [];
+    }
+
+    $decoded = json_decode($raw, true);
+    return is_array($decoded) ? $decoded : [];
+}
+
+function writeAdminLoginThrottleState(array $state): void
+{
+    $path = adminLoginThrottleStoragePath();
+    file_put_contents($path, json_encode($state, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES), LOCK_EX);
+}
+
+function adminLoginThrottleKey(string $ip, string $email): string
+{
+    return hash('sha256', strtolower(trim($email)) . '|' . $ip);
+}
+
+function getAdminLoginThrottleStatus(string $ip, string $email): array
+{
+    $state = readAdminLoginThrottleState();
+    $key = adminLoginThrottleKey($ip, $email);
+    $entry = $state[$key] ?? ['count' => 0, 'first_attempt_at' => 0, 'blocked_until' => 0];
+    $now = time();
+
+    if (($entry['blocked_until'] ?? 0) > $now) {
+        return ['blocked' => true, 'retry_after' => (int)$entry['blocked_until'] - $now];
+    }
+
+    if (($entry['first_attempt_at'] ?? 0) > 0 && ($now - (int)$entry['first_attempt_at']) > 900) {
+        unset($state[$key]);
+        writeAdminLoginThrottleState($state);
+    }
+
+    return ['blocked' => false, 'retry_after' => 0];
+}
+
+function recordAdminLoginFailure(string $ip, string $email): void
+{
+    $state = readAdminLoginThrottleState();
+    $key = adminLoginThrottleKey($ip, $email);
+    $now = time();
+    $entry = $state[$key] ?? ['count' => 0, 'first_attempt_at' => $now, 'blocked_until' => 0];
+
+    if (($entry['first_attempt_at'] ?? 0) <= 0 || ($now - (int)$entry['first_attempt_at']) > 900) {
+        $entry = ['count' => 0, 'first_attempt_at' => $now, 'blocked_until' => 0];
+    }
+
+    $entry['count'] = (int)($entry['count'] ?? 0) + 1;
+    if ($entry['count'] >= 5) {
+        $entry['blocked_until'] = $now + 900;
+    }
+
+    $state[$key] = $entry;
+    writeAdminLoginThrottleState($state);
+}
+
+function clearAdminLoginFailures(string $ip, string $email): void
+{
+    $state = readAdminLoginThrottleState();
+    $key = adminLoginThrottleKey($ip, $email);
+
+    if (isset($state[$key])) {
+        unset($state[$key]);
+        writeAdminLoginThrottleState($state);
+    }
+}
+
+function ipMatchesCidr(string $ip, string $cidr): bool
+{
+    [$subnet, $mask] = array_pad(explode('/', $cidr, 2), 2, null);
+    if ($subnet === null || $mask === null || !is_numeric($mask)) {
+        return false;
+    }
+
+    $ipBin = @inet_pton($ip);
+    $subnetBin = @inet_pton($subnet);
+    if ($ipBin === false || $subnetBin === false || strlen($ipBin) !== strlen($subnetBin)) {
+        return false;
+    }
+
+    $maskBits = (int)$mask;
+    $maxBits = strlen($ipBin) * 8;
+    if ($maskBits < 0 || $maskBits > $maxBits) {
+        return false;
+    }
+
+    $fullBytes = intdiv($maskBits, 8);
+    $remainingBits = $maskBits % 8;
+
+    if ($fullBytes > 0 && substr($ipBin, 0, $fullBytes) !== substr($subnetBin, 0, $fullBytes)) {
+        return false;
+    }
+
+    if ($remainingBits === 0) {
+        return true;
+    }
+
+    $maskByte = (0xFF << (8 - $remainingBits)) & 0xFF;
+    return ((ord($ipBin[$fullBytes]) & $maskByte) === (ord($subnetBin[$fullBytes]) & $maskByte));
+}
+
+function getAdminIpWhitelist(): array
+{
+    $connection = db();
+
+    if ($connection) {
+        try {
+            $stmt = $connection->prepare('SELECT setting_value FROM settings WHERE setting_key = :key LIMIT 1');
+            $stmt->execute([':key' => 'admin_ip_whitelist']);
+            $stored = $stmt->fetchColumn();
+            if (is_string($stored) && trim($stored) !== '') {
+                return normalizeIpList($stored);
+            }
+        } catch (Throwable $exception) {
+            // Fallback to env-based whitelist below.
+        }
+    }
+
+    $raw = trim((string)appEnv('ADMIN_IP_WHITELIST', '127.0.0.1,::1'));
+    return normalizeIpList($raw);
+}
+
+function isIpWhitelistedForAdmin(string $ip): bool
+{
+    $whitelist = getAdminIpWhitelist();
+    if ($whitelist === []) {
+        return false;
+    }
+
+    foreach ($whitelist as $allowed) {
+        if (strpos($allowed, '/') !== false) {
+            if (ipMatchesCidr($ip, $allowed)) {
+                return true;
+            }
+            continue;
+        }
+
+        if ($ip === $allowed) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function enforceAdminIpWhitelist(): void
+{
+    if (!isInstalled()) {
+        header('Location: ' . rtrim((string)appEnv('BASE_URL', BASE_URL), '/') . '/install/index.php');
+        exit;
+    }
+
+    $ip = getClientIpAddress();
+    if (isIpWhitelistedForAdmin($ip)) {
+        return;
+    }
+
+    http_response_code(403);
+    $errorPage = __DIR__ . '/../403.php';
+    if (is_file($errorPage)) {
+        require $errorPage;
+    } else {
+        echo '403 Forbidden';
+    }
+    exit;
+}
+
+function isAdminLoggedIn(): bool
+{
+    startSecureSession();
+    return !empty($_SESSION['admin_id']);
+}
+
+function requireAdmin(): void
+{
+    enforceAdminIpWhitelist();
+
+    if (!isAdminLoggedIn()) {
+        header('Location: login.php');
+        exit;
+    }
+}
+
+function attemptAdminLogin(string $email, string $password, ?string &$error = null): bool
+{
+    enforceAdminIpWhitelist();
+    startSecureSession();
+    $ip = getClientIpAddress();
+    $throttle = getAdminLoginThrottleStatus($ip, $email);
+    if ($throttle['blocked']) {
+        $error = 'Too many failed attempts. Try again after ' . $throttle['retry_after'] . ' seconds.';
+        return false;
+    }
+
+    $admin = fetchOneRow('SELECT id, name, password_hash FROM admins WHERE email = :email LIMIT 1', [':email' => $email]);
+
+    if (!$admin || !password_verify($password, $admin['password_hash'])) {
+        recordAdminLoginFailure($ip, $email);
+        return false;
+    }
+
+    clearAdminLoginFailures($ip, $email);
+    session_regenerate_id(true);
+    $_SESSION['admin_id'] = (int)$admin['id'];
+    $_SESSION['admin_name'] = $admin['name'];
+
+    return true;
+}
+
+function adminLogout(): void
+{
+    startSecureSession();
+    $_SESSION = [];
+    session_destroy();
+}
